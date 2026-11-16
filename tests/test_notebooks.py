@@ -89,6 +89,15 @@ def test_stored_outputs_hold_no_absolute_path(path):
             assert not _LEAKS.search(text), f"{path.name} cell {i} stores a path: {_LEAKS.search(text).group(0)!r}"
 
 
+@pytest.mark.menagerie
+def test_mount_notebook_runs():
+    pytest.importorskip("mujoco_menagerie")
+    pytest.importorskip("torchrl")
+    ns = run_notebook("mount.ipynb")
+    assert type(ns["go1_env"].cfg.task.mount).__name__ == "MobileMount"  # no mount= written: the robot decides
+    assert ns["placed"].resolve().task.mount.heading == pytest.approx(3.141592653589793 / 2)
+
+
 # --- the Menagerie notebook (marker menagerie; the frames also need an OpenGL context) -------------------------------------
 
 
