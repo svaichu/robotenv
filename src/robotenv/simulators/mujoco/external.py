@@ -195,6 +195,15 @@ def problems_of(cfg: EnvConfig) -> list[Problem]:
             "its own actuators and contacts may be unstable at that step",
             stacklevel=2,
         )
+    implicit = {"implicit": mujoco.mjtIntegrator.mjINT_IMPLICIT, "implicitfast": mujoco.mjtIntegrator.mjINT_IMPLICITFAST}
+    native = not isinstance(cfg.control.gains, (FixedGains, InertiaScaledGains))
+    if native and int(facts.model.opt.integrator) in map(int, implicit.values()) and cfg.sim.integrator not in implicit:
+        wanted = next(k for k, v in implicit.items() if int(v) == int(facts.model.opt.integrator))
+        warnings.warn(
+            f"the model of {robot.provider}/{robot.name} asks for the integrator {wanted!r} and sim.integrator = {cfg.sim.integrator!r}: "
+            f"its own servos may chatter under an explicit integrator; set sim.integrator = {wanted!r}",
+            stacklevel=2,
+        )
     return problems
 
 

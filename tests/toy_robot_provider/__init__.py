@@ -127,9 +127,13 @@ ARM3D = (
     .replace('kp="100"', 'kp="100" kv="10"')
 )
 
+# The damped arm with an implicit integrator asked for in its own option, as a model with stiff servos does.
+ARM3I = ARM3D.replace('model="arm3d"', 'model="arm3i"').replace("<worldbody>", '<option integrator="implicitfast"/>\n  <worldbody>', 1)
+
 MODELS = {
     "arm3": ("arm3.xml", ARM3),
     "arm3d": ("arm3d.xml", ARM3D),
+    "arm3i": ("arm3i.xml", ARM3I),
     "floater": ("floater.xml", FLOATER),
     "armfinger": ("armfinger.xml", ARMFINGER),
     "passive": ("passive.xml", PASSIVE),
