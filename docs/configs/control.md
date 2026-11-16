@@ -4,7 +4,7 @@
 embodiments is never partly a hidden difference in how they were driven.
 
 ```python
-from robotdesigner.config import CONTROL_MODES, ConfigError, ControlConfig, FixedGains, InertiaScaledGains, NativeGains
+from robotenv.config import CONTROL_MODES, ConfigError, ControlConfig, FixedGains, InertiaScaledGains, NativeGains
 
 pos = ControlConfig("joint_pos_abs", FixedGains(kp=60.0, kd=6.0), action_scale=None)
 delta = ControlConfig("joint_pos_delta", FixedGains(kp=60.0, kd=6.0), action_scale=0.05)

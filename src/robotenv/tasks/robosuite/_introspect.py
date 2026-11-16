@@ -1,4 +1,4 @@
-"""What robotdesigner needs to know about robosuite's environment classes, read from the library itself."""
+"""What robotenv needs to know about robosuite's environment classes, read from the library itself."""
 
 from __future__ import annotations
 
@@ -53,7 +53,7 @@ def constructor_params(cls: type) -> dict[str, inspect.Parameter]:
 def resolved_env_kwargs(cls: type, user: dict[str, Any]) -> dict[str, Any]:
     """Every task argument the environment will run with: its own defaults, overridden by ``user``.
 
-    Arguments robotdesigner sets itself are left out. Defaults that are not plain values are shown as ``repr``.
+    Arguments robotenv sets itself are left out. Defaults that are not plain values are shown as ``repr``.
     """
     out: dict[str, Any] = {}
     for name, p in constructor_params(cls).items():

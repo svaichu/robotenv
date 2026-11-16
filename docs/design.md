@@ -13,7 +13,7 @@ control interface, the same seeds, with only the robot changed. The first family
    embodiments can be compared, stored and rebuilt on another machine from a dict.
 2. **No hidden defaults in the core.** `EnvConfig` requires every field. Defaults exist in exactly one place, the builder (`BaseEnvConfig`), are listed, and are versioned. An environment is
    identified by `env_hash` of a complete config.
-3. **Configs are separate from engines.** `robotdesigner.config` and `.robot` need numpy only and never import a simulator, torch or robosuite. Configs can be written, validated, hashed and swept on a
+3. **Configs are separate from engines.** `robotenv.config` and `.robot` need numpy only and never import a simulator, torch or robosuite. Configs can be written, validated, hashed and swept on a
    machine that cannot run a simulation. Engine code loads when an environment is built.
 4. **Reject, never approximate.** A combination the chosen simulator cannot run (control mode, device, task, scene) is rejected up front with every problem listed and the config path to
    change. Nothing is silently substituted.
@@ -52,7 +52,7 @@ The words are used with one meaning throughout; old commit messages and issues m
 | word | meaning |
 |---|---|
 | **embodiment** | a robot configuration (`ParametricArm`) |
-| **simulator** | a physics engine realised as code (`robotdesigner.simulators.<name>`), named by `sim.simulator`: `mujoco`, `warp` |
+| **simulator** | a physics engine realised as code (`robotenv.simulators.<name>`), named by `sim.simulator`: `mujoco`, `warp` |
 | **task** | `"<namespace>/<name>"`; defined by a params object of a provider |
 | **task provider** | the owner of a namespace; builds tasks for simulators |
 | **robot provider** | the owner of a robot namespace (`config.robot_providers`); reads a model, opens it as a spec and gives a kinematics oracle |

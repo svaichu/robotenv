@@ -1819,7 +1819,7 @@ wheels = [
 ]
 
 [[package]]
-name = "robotdesigner"
+name = "robotenv"
 version = "0.2.0"
 source = { editable = "." }
 dependencies = [
@@ -1886,9 +1886,9 @@ requires-dist = [
     { name = "pyyaml", marker = "extra == 'dev'" },
     { name = "pyyaml", marker = "extra == 'yaml'" },
     { name = "robosuite", marker = "extra == 'robosuite'", specifier = ">=1.5,<1.6" },
-    { name = "robotdesigner", extras = ["env"], marker = "extra == 'menagerie'" },
-    { name = "robotdesigner", extras = ["env"], marker = "extra == 'robosuite'" },
-    { name = "robotdesigner", extras = ["env"], marker = "extra == 'warp'" },
+    { name = "robotenv", extras = ["env"], marker = "extra == 'menagerie'" },
+    { name = "robotenv", extras = ["env"], marker = "extra == 'robosuite'" },
+    { name = "robotenv", extras = ["env"], marker = "extra == 'warp'" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "tensordict", marker = "extra == 'env'", specifier = ">=0.14.3,<0.15" },
     { name = "torch", marker = "extra == 'env'", specifier = ">=2.7" },

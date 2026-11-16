@@ -10,7 +10,7 @@ from __future__ import annotations
 import math
 from typing import Any, ClassVar
 
-from robotdesigner.config import Pose
+from robotenv.config import Pose
 
 from . import ReachParams, ToyTasks
 

@@ -139,7 +139,7 @@ class Clip:
             else:
                 need("PIL", "inline display (neither MP4 nor GIF can be written)")
                 fmt = "gif"
-                note = "MP4 needs imageio-ffmpeg (pip install 'robotdesigner[viz]'); showing a GIF instead."
+                note = "MP4 needs imageio-ffmpeg (pip install 'robotenv[viz]'); showing a GIF instead."
         data = self.to_bytes(fmt)
         if len(data) / 1e6 > _EMBED_WARN_MB:
             warnings.warn(

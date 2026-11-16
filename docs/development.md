@@ -3,7 +3,7 @@
 ## Layout
 
 ```
-src/robotdesigner/
+src/robotenv/
     robot/        ParametricArm, ExternalRobot, JointSpec, LinkSpec, TwoFingerGripper, Pose, chain()   numpy only
     config/       ControlConfig, SimConfig, TaskConfig, EnvConfig, BaseEnvConfig, Chain, sweep,    numpy only
                   the task-provider and robot-provider registries (providers.py, robot_providers.py), kinematics oracle, defaults.py
@@ -23,7 +23,7 @@ docs/             this documentation
 pizza_robot/      a standalone MuJoCo scene (an ElRobot arm on a table, with a viewer script); not wired into the package
 ```
 
-The two halves of the dependency rule: everything marked *numpy only* must import without torch, MuJoCo or robosuite (`import robotdesigner.config` is the test), and the engine side is
+The two halves of the dependency rule: everything marked *numpy only* must import without torch, MuJoCo or robosuite (`import robotenv.config` is the test), and the engine side is
 imported lazily, by `make_env` and by the provider's `build`.
 
 ## Install for development

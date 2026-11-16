@@ -1,6 +1,6 @@
 """The core names no task.
 
-Task ids, provider namespaces and params classes belong to the providers (``robotdesigner/tasks/<namespace>``). The code
+Task ids, provider namespaces and params classes belong to the providers (``robotenv/tasks/<namespace>``). The code
 that every task goes through (configs, simulators, ``make_env``, viz, the task contract) must not mention them. The
 names to look for are read from the registry, so this test does not hold a list of tasks either.
 """
@@ -8,14 +8,14 @@ names to look for are read from the registry, so this test does not hold a list 
 import pathlib
 import re
 
-from robotdesigner.config import get_task_provider, list_task_providers
+from robotenv.config import get_task_provider, list_task_providers
 
-# The one placeholder task the package ships and the core may name (``robotdesigner/tasks/empty``): a runnable default
+# The one placeholder task the package ships and the core may name (``robotenv/tasks/empty``): a runnable default
 # needs a task. See docs/design.md: the package ships one placeholder task. Everything else
 # stays enforced.
 EXEMPT_NAMESPACES = frozenset({"empty"})
 
-SRC = pathlib.Path(__file__).resolve().parents[1] / "src" / "robotdesigner"
+SRC = pathlib.Path(__file__).resolve().parents[1] / "src" / "robotenv"
 CORE = [
     *sorted((SRC / "config").rglob("*.py")),
     *sorted((SRC / "simulators").rglob("*.py")),
@@ -65,6 +65,6 @@ def test_core_code_names_no_task():
 
 
 def test_capabilities_have_no_task_ids():
-    from robotdesigner.simulators import Capabilities
+    from robotenv.simulators import Capabilities
 
     assert "task_ids" not in Capabilities.__dataclass_fields__

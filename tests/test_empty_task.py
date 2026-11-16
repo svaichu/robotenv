@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from robotdesigner.config import ConfigError, Mount, Pose, TaskConfig, get_task_provider, list_task_providers
-from robotdesigner.tasks.empty import EmptyParams
+from robotenv.config import ConfigError, Mount, Pose, TaskConfig, get_task_provider, list_task_providers
+from robotenv.tasks.empty import EmptyParams
 
 
 def test_discovery_and_config_side():
@@ -26,8 +26,8 @@ pytest.importorskip("torchrl")
 
 from torchrl.envs.utils import check_env_specs  # noqa: E402
 
-from robotdesigner import make_env  # noqa: E402
-from robotdesigner.config import ControlConfig, EnvConfig, FixedGains, MujocoOptions, SimConfig, chain  # noqa: E402
+from robotenv import make_env  # noqa: E402
+from robotenv.config import ControlConfig, EnvConfig, FixedGains, MujocoOptions, SimConfig, chain  # noqa: E402
 
 
 def make_cfg(max_episode_steps=7, num_envs=3, simulator="mujoco"):

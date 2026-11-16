@@ -12,12 +12,12 @@ pytest.importorskip("mujoco_warp")
 
 from torchrl.envs.utils import check_env_specs, step_mdp  # noqa: E402
 
-from robotdesigner.config import BaseEnvConfig, Chain, ConfigError, ControlConfig, FixedGains, SimConfig, WarpOptions  # noqa: E402
-from robotdesigner.envs import make_env  # noqa: E402
-from robotdesigner.simulators.base import task_seed  # noqa: E402
-from robotdesigner.simulators.warp.env import WarpEnv  # noqa: E402
+from robotenv.config import BaseEnvConfig, Chain, ConfigError, ControlConfig, FixedGains, SimConfig, WarpOptions  # noqa: E402
+from robotenv.envs import make_env  # noqa: E402
+from robotenv.simulators.base import task_seed  # noqa: E402
+from robotenv.simulators.warp.env import WarpEnv  # noqa: E402
 from tests.test_mujoco_env import make_cfg  # noqa: E402
-from robotdesigner.config import MobileMount, Mount  # noqa: E402,F401
+from robotenv.config import MobileMount, Mount  # noqa: E402,F401
 from tests.test_render import needs_gl  # noqa: E402
 
 DEVICES = ["cpu", pytest.param("cuda:0", marks=[pytest.mark.gpu, pytest.mark.skipif(
@@ -27,7 +27,7 @@ OPTIONS = WarpOptions(njmax=64, nconmax=16, cuda_graph=False)
 
 def warp_env(cfg, device, options=OPTIONS):
     """Build a WarpEnv directly: make_env rejects the cpu device, which only the tests use."""
-    from robotdesigner.config.providers import get_task_provider
+    from robotenv.config.providers import get_task_provider
 
     s = cfg.sim
     sim = SimConfig("warp", s.num_envs, device, s.dt, s.integrator, s.control_freq, s.seed, s.scene, options)
@@ -147,7 +147,7 @@ def test_make_env_reports_the_missing_gpu_and_the_cpu_task_lists_warp():
 
 
 def test_the_task_stream_seed_is_shared_by_both_simulators():
-    from robotdesigner.simulators.mujoco import env as cpu_env
+    from robotenv.simulators.mujoco import env as cpu_env
 
     assert cpu_env.task_seed is task_seed and task_seed(0) == 0x5DEECE66D
 
@@ -173,8 +173,8 @@ def test_render_matches_the_cpu_env_for_the_same_state(device):
 
 
 def check_a_too_small_constraint_capacity_raises(device, cuda_graph):
-    from robotdesigner.config import Pose, TaskConfig
-    from robotdesigner.simulators.warp.sim import CapacityError
+    from robotenv.config import Pose, TaskConfig
+    from robotenv.simulators.warp.sim import CapacityError
 
     cfg = make_cfg(n=4, num_envs=4, max_episode_steps=100)
     cfg = replace(cfg, task=replace(cfg.task, mount=Mount(Pose((0.0, 0.0, 0.3), (1.0, 0.0, 0.0, 0.0)))))

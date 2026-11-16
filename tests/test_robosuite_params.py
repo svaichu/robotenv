@@ -4,11 +4,11 @@ from dataclasses import replace
 
 import pytest
 
-from robotdesigner.config import (
+from robotenv.config import (
     Mount, ConfigError, ControlConfig, EnvConfig, FixedGains, MujocoOptions, OwnReachable, Pose, SimConfig, TaskConfig, chain,
 )
-from robotdesigner.tasks.robosuite import LiftObject, ReachObject, RobosuiteParams
-from robotdesigner.tasks.robosuite.params import RESERVED_ENV_KWARGS, objective_from_dict
+from robotenv.tasks.robosuite import LiftObject, ReachObject, RobosuiteParams
+from robotenv.tasks.robosuite.params import RESERVED_ENV_KWARGS, objective_from_dict
 
 
 def make_cfg(params=None, name="Lift"):

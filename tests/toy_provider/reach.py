@@ -6,9 +6,9 @@ import numpy as np
 import torch
 from torchrl.data import Composite, Unbounded
 
-from robotdesigner.config import FixedBox, OwnReachable, world_mount
-from robotdesigner.config import kinematics as kin
-from robotdesigner.tasks.base import BaseTask
+from robotenv.config import FixedBox, OwnReachable, world_mount
+from robotenv.config import kinematics as kin
+from robotenv.tasks.base import BaseTask
 
 _TARGET = (0.95, 0.20, 0.20, 0.95)
 _TARGET_HIT = (0.20, 0.80, 0.30, 0.95)
@@ -85,7 +85,7 @@ class ReachTask(BaseTask):
     def overlays(self, scene, sim, data, env_index: int) -> None:
         import mujoco
 
-        from robotdesigner.simulators.mujoco.render import add_geom, add_line
+        from robotenv.simulators.mujoco.render import add_geom, add_line
 
         p, R = sim.base_frame()
         tol = float(self._tol)

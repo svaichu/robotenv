@@ -5,13 +5,13 @@ torch = pytest.importorskip("torch")
 pytest.importorskip("mujoco")
 pytest.importorskip("torchrl")
 
-from robotdesigner.config import FixedBox, kinematics as kin  # noqa: E402
-from robotdesigner.simulators.mujoco.compile import compile_robot  # noqa: E402
-from robotdesigner.simulators.mujoco.sim import BatchedSim  # noqa: E402
-from robotdesigner.tasks.base import SimView  # noqa: E402
+from robotenv.config import FixedBox, kinematics as kin  # noqa: E402
+from robotenv.simulators.mujoco.compile import compile_robot  # noqa: E402
+from robotenv.simulators.mujoco.sim import BatchedSim  # noqa: E402
+from robotenv.tasks.base import SimView  # noqa: E402
 from tests.test_mujoco_compile import COMMON, make_cfg  # noqa: E402
 from tests.toy_provider.reach import ReachTask  # noqa: E402
-from robotdesigner.config import Pose, chain  # noqa: E402
+from robotenv.config import Pose, chain  # noqa: E402
 from tests.test_mujoco_env import make_cfg as env_cfg  # noqa: E402
 
 

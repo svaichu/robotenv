@@ -1,6 +1,6 @@
 """Simulator protocol and capability checks. No heavy imports.
 
-A simulator is a physics engine realized as code (``robotdesigner.simulators.<name>``). Which tasks exist is the business of task providers (``config.providers``); a provider
+A simulator is a physics engine realized as code (``robotenv.simulators.<name>``). Which tasks exist is the business of task providers (``config.providers``); a provider
 checks its own tasks against the simulator (``TaskProvider.validate``), so a simulator never lists task ids.
 """
 

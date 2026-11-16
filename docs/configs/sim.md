@@ -3,7 +3,7 @@
 `SimConfig` chooses the physics engine and every number that changes how time advances. Nothing has a default here; `BaseEnvConfig` supplies defaults ([base-env](base-env.md)).
 
 ```python
-from robotdesigner.config import ConfigError, MujocoOptions, SimConfig, WarpOptions, INTEGRATORS
+from robotenv.config import ConfigError, MujocoOptions, SimConfig, WarpOptions, INTEGRATORS
 
 sim = SimConfig(simulator="mujoco", num_envs=8, device="cpu", dt=0.002, integrator="euler", control_freq=50.0, seed=0,
                 scene="empty", options=MujocoOptions(self_collision=False))
@@ -56,7 +56,7 @@ Both simulators use the same presets. A task can require a scene: `robosuite/*` 
 Capacities are per world, so `num_envs` can change without touching them. `WarpOptions.default()` is `njmax=128, nconmax=32, cuda_graph=True`: a plain choice measured
 on table-top scenes with one or two objects (`benchmarks/bench_warp.py`), with headroom, not a recommendation for every scene. A scene with many contacts
 needs more. When a capacity is exceeded the library would silently clip, so the environment checks after every step and raises
-`robotdesigner.simulators.warp.sim.CapacityError` naming the field and what was used. It is never silent.
+`robotenv.simulators.warp.sim.CapacityError` naming the field and what was used. It is never silent.
 
 ```python
 assert WarpOptions.default() == WarpOptions(njmax=128, nconmax=32, cuda_graph=True)

@@ -47,7 +47,7 @@ class RobosuiteTasks:
             apply_compat()
             import robosuite  # noqa: F401
         except ImportError:
-            return [Problem("task.params.name", "robosuite is not installed; install robotdesigner[robosuite]")]
+            return [Problem("task.params.name", "robosuite is not installed; install robotenv[robosuite]")]
 
         from . import _introspect as intro
 

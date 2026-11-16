@@ -15,16 +15,16 @@ pytest.importorskip("mujoco_warp")
 
 from torchrl.envs.utils import check_env_specs
 
-from robotdesigner.config import (
+from robotenv.config import (
     ControlConfig,
     FixedGains,
     InertiaScaledGains,
     Pose,
     WarpOptions,
 )
-from robotdesigner.simulators import get_simulator
-from robotdesigner.simulators.mujoco.external import compose
-from robotdesigner.simulators.warp.sim import CapacityError
+from robotenv.simulators import get_simulator
+from robotenv.simulators.mujoco.external import compose
+from robotenv.simulators.warp.sim import CapacityError
 from tests.parity import build, on_warp, random_case, twin, with_sim
 from tests.test_mujoco_external import ROTATED, idle_cfg, reach_cfg
 from tests.test_warp_env import DEVICES
@@ -146,9 +146,9 @@ def test_too_small_a_contact_capacity_raises_an_error_that_names_the_option(floa
 
 
 def test_a_feature_the_library_does_not_run_is_a_problem_at_the_robot_path(arm, monkeypatch):
-    from robotdesigner.simulators import warp as warp_module
-    from robotdesigner.simulators.base import Problem
-    from robotdesigner.simulators.warp import sim as warp_sim
+    from robotenv.simulators import warp as warp_module
+    from robotenv.simulators.base import Problem
+    from robotenv.simulators.warp import sim as warp_sim
 
     monkeypatch.setattr(warp_sim, "check_model_supported", lambda model: [Problem("task", "body plugins are not supported by the warp simulator")])
     problems = warp_module.WarpSimulator().validate(with_sim(reach_cfg(arm), simulator="warp", device="cuda:0", options=WarpOptions.default()))
@@ -156,7 +156,7 @@ def test_a_feature_the_library_does_not_run_is_a_problem_at_the_robot_path(arm, 
 
 
 def test_provider_problems_reach_the_warp_validation_too(arm):
-    from robotdesigner.simulators import warp as warp_module
+    from robotenv.simulators import warp as warp_module
 
     bad = reach_cfg(replace(arm, source="stale"))
     problems = warp_module.WarpSimulator().validate(with_sim(bad, simulator="warp", device="cuda:0", options=WarpOptions.default()))

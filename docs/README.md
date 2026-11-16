@@ -1,11 +1,11 @@
-# robotdesigner documentation
+# robotenv documentation
 
 A framework for loading different robot configurations ("embodiments") into one batched RL environment, so the same control task can be compared across robots.
 The model in one paragraph: a robot is validated, hashable **data**; an `EnvConfig` (robot, control, task, simulation) holds every value that changes behaviour; `make_env(cfg)` is the single
 step from config to a batched TorchRL environment; simulators and tasks are separate, and tasks come from providers.
 
 ```python
-from robotdesigner.config import BaseEnvConfig, Chain
+from robotenv.config import BaseEnvConfig, Chain
 
 cfg = BaseEnvConfig().robot(Chain(n=3, axes="zyy", total_length=0.9, total_mass=3.0)).sim(num_envs=8)
 env_cfg = cfg.resolve()                         # robot + control + task + sim, every value explicit

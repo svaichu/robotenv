@@ -1,6 +1,6 @@
 # Running on a cluster
 
-robotdesigner does not launch jobs. It gives you the pieces that make a launch safe: configs that are plain data, a hash per run, a `sweep` that expands a family, and environments that build on
+robotenv does not launch jobs. It gives you the pieces that make a launch safe: configs that are plain data, a hash per run, a `sweep` that expands a family, and environments that build on
 a worker from a dict. This page is how to put them together on a shared machine (Slurm or anything else). It uses no scheduler-specific code.
 
 ## The pattern: one resolved dict per job
@@ -10,7 +10,7 @@ import json
 import os
 import tempfile
 
-from robotdesigner.config import BaseEnvConfig, Chain, EnvConfig
+from robotenv.config import BaseEnvConfig, Chain, EnvConfig
 
 base = BaseEnvConfig().robot(Chain(n=3, axes="zyy", total_length=0.9, total_mass=3.0)).sim(num_envs=64)
 family = base.sweep(
@@ -59,7 +59,7 @@ with MuJoCo environment processes.
 - **Rendering on a node without a display**: `MUJOCO_GL=egl` before MuJoCo is imported; on a multi-GPU node pin an idle device with `MUJOCO_EGL_DEVICE_ID` ([viz](viz.md#headless-machines)).
 - **Do not run heavy work on a login node.** Tests, rollouts and notebooks that step many envs belong in a job. A short interactive allocation is fine for notebooks.
 - **Caches**: Warp compiles kernels on first use; point its cache at node-local or shared storage you own if the home directory is small or read-only.
-- **Record**: `env.env_hash`, `env.robot_hash`, the resolved dict, the package version (`robotdesigner.__version__`) plus its git commit, and the MuJoCo, torch, TorchRL and (if used) robosuite and Warp versions.
+- **Record**: `env.env_hash`, `env.robot_hash`, the resolved dict, the package version (`robotenv.__version__`) plus its git commit, and the MuJoCo, torch, TorchRL and (if used) robosuite and Warp versions.
 
 ## Moving code between machines
 

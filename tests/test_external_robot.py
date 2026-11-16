@@ -6,7 +6,7 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from robotdesigner.config import (
+from robotenv.config import (
     BaseEnvConfig,
     ConfigError,
     ControlConfig,
@@ -27,8 +27,8 @@ from robotdesigner.config import (
     snapped,
     unregister_robot_provider,
 )
-from robotdesigner.config import kinematics as kin
-from robotdesigner.config.control import CONTROL_MODES, NATIVE_MODES
+from robotenv.config import kinematics as kin
+from robotenv.config.control import CONTROL_MODES, NATIVE_MODES
 from tests.toy_robot_provider import PROVIDER, ToyRobots
 
 KW = {"provider": "toyrobot", "name": "arm3", "entry": "arm3.xml", "source": "abc123"}
@@ -329,7 +329,7 @@ def test_kinematics_without_the_engine_is_a_clear_config_error():
         "sys.modules['mujoco'] = None\n"
         "import tests.conftest\n"
         "import numpy as np\n"
-        "from robotdesigner.config import ConfigError, ExternalJoint, ExternalRobot, EndEffectorRef, Pose, kinematics as kin\n"
+        "from robotenv.config import ConfigError, ExternalJoint, ExternalRobot, EndEffectorRef, Pose, kinematics as kin\n"
         "r = ExternalRobot(provider='toyrobot', name='arm3', entry='arm3.xml', source='s', joints=(ExternalJoint('j1', None, 1.0),),\n"
         "    home_qpos=(0.0,), home_root=None, keyframe=None, end_effector=EndEffectorRef('ee', None, Pose.identity()), actuator_kind='position')\n"
         "try:\n"
@@ -357,9 +357,9 @@ def test_describe_of_the_toy_provider_matches_a_hand_written_robot():
 def test_the_entry_point_group_adds_providers(monkeypatch):
     import importlib.metadata
 
-    from robotdesigner.config import robot_providers
+    from robotenv.config import robot_providers
 
-    assert robot_providers.ENTRY_POINT_GROUP == "robotdesigner.robot.providers"
+    assert robot_providers.ENTRY_POINT_GROUP == "robotenv.robot.providers"
     ep = importlib.metadata.EntryPoint(name="viaep", value="tests.toy_robot_provider:PROVIDER", group=robot_providers.ENTRY_POINT_GROUP)
     monkeypatch.setattr(
         importlib.metadata, "entry_points", lambda **kw: [ep] if kw.get("group") == robot_providers.ENTRY_POINT_GROUP else []

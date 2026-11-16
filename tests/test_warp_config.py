@@ -4,8 +4,8 @@ import sys
 
 import pytest
 
-from robotdesigner.config import ConfigError, EnvConfig, MujocoOptions, SimConfig, WarpOptions
-from robotdesigner.simulators import get_simulator, list_simulators
+from robotenv.config import ConfigError, EnvConfig, MujocoOptions, SimConfig, WarpOptions
+from robotenv.simulators import get_simulator, list_simulators
 from tests.test_env_config import make_cfg
 
 SIM = dict(simulator="warp", num_envs=4, device="cuda:0", dt=0.002, integrator="euler", control_freq=50.0, seed=0,
@@ -58,7 +58,7 @@ def test_registered_and_capabilities_without_heavy_imports():
     code = (
         "import sys\n"
         "for m in ['torch', 'mujoco', 'mujoco_warp', 'warp']: sys.modules[m] = None\n"
-        "from robotdesigner.simulators import get_simulator\n"
+        "from robotenv.simulators import get_simulator\n"
         "c = get_simulator('warp').capabilities()\n"
         "assert c.devices == {'cuda'}\n"
     )

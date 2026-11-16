@@ -11,12 +11,12 @@ pytest.importorskip("torchrl")
 
 from torchrl.envs.utils import check_env_specs, step_mdp  # noqa: E402
 
-from robotdesigner import make_env  # noqa: E402
-from robotdesigner.config import world_mount  # noqa: E402
-from robotdesigner.config import (  # noqa: E402
+from robotenv import make_env  # noqa: E402
+from robotenv.config import world_mount  # noqa: E402
+from robotenv.config import (  # noqa: E402
     ConfigError, ControlConfig, EnvConfig, FixedGains, MujocoOptions, Mount, Pose, SimConfig, TaskConfig, chain,
 )
-from robotdesigner.tasks.robosuite import LiftObject, ReachObject, RobosuiteParams, PROVIDER  # noqa: E402
+from robotenv.tasks.robosuite import LiftObject, ReachObject, RobosuiteParams, PROVIDER  # noqa: E402
 
 COMMON = dict(radius=0.03, damping=0.5, armature=0.01, frictionloss=0.0, effort_limit=50.0)
 HIGH = Mount(Pose((0.0, 0.0, 0.288), (1.0, 0.0, 0.0, 0.0)))  # 0.288 m above the stock mount: the arm does not touch the scene
@@ -229,8 +229,8 @@ def test_mount_frame_follows_the_scene_kwargs():
 
 
 def test_the_frame_is_the_same_for_two_seeds_and_is_read_once_per_scene(monkeypatch):
-    import robotdesigner.tasks.robosuite as rs
-    import robotdesigner.tasks.robosuite.scene as scene
+    import robotenv.tasks.robosuite as rs
+    import robotenv.tasks.robosuite.scene as scene
 
     calls = []
     real = scene.load_scene
@@ -253,8 +253,8 @@ def stock_base_pose(env_name):
     """What robosuite itself says: the root of a stock Panda in ``env_name``."""
     import robosuite
 
-    from robotdesigner.tasks.robosuite._compat import apply_compat
-    from robotdesigner.tasks.robosuite.scene import matrix_to_quat
+    from robotenv.tasks.robosuite._compat import apply_compat
+    from robotenv.tasks.robosuite.scene import matrix_to_quat
 
     apply_compat()
     env = robosuite.make(env_name, robots="Panda", has_renderer=False, has_offscreen_renderer=False, use_camera_obs=False)
@@ -266,7 +266,7 @@ def stock_base_pose(env_name):
 
 
 def single_arm_names():
-    from robotdesigner.tasks.robosuite import _introspect as intro
+    from robotenv.tasks.robosuite import _introspect as intro
 
     return [n for n in intro.single_arm_env_names() if not n.endswith("Single")]
 

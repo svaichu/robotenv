@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 
-INSTALL_HINT = "pip install 'robotdesigner[viz]'"
+INSTALL_HINT = "pip install 'robotenv[viz]'"
 
 
 def have(module: str) -> bool:

@@ -5,8 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, fields
 from typing import Any, ClassVar, Mapping
 
-from robotdesigner._canon import as_bool, as_float, check_keys
-from robotdesigner.errors import ConfigError
+from robotenv._canon import as_bool, as_float, check_keys
+from robotenv.errors import ConfigError
 
 
 @dataclass(frozen=True, slots=True)

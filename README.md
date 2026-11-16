@@ -1,4 +1,4 @@
-# robotdesigner
+# robotenv
 
 Load different robot configurations into one batched RL environment, so the same control task can be compared across embodiments.
 
@@ -7,7 +7,7 @@ A robot arm is **validated, hashable data**. An environment is one complete conf
 and the same seed gives every embodiment the same scene.
 
 ```python
-from robotdesigner.config import BaseEnvConfig, Chain
+from robotenv.config import BaseEnvConfig, Chain
 
 cfg = (
     BaseEnvConfig()                                                          # a complete default: one-link arm, empty/idle task, CPU MuJoCo
@@ -31,7 +31,7 @@ pip install -e ".[env,viz]"             # + GIF / MP4 output
 pip install -e ".[env,robosuite,viz,dev]"   # a development install; "yaml" adds YAML config files
 ```
 
-Python >= 3.10. `import robotdesigner.config` never imports an engine.
+Python >= 3.10. `import robotenv.config` never imports an engine.
 
 ## Ideas that shape the API
 
@@ -46,8 +46,8 @@ Python >= 3.10. `import robotdesigner.config` never imports an engine.
 A model that already exists, such as a Panda or a Go1 from MuJoCo Menagerie, is an `ExternalRobot`: a reference with the numbers the config needs, driven by the model's own actuators.
 
 ```python
-from robotdesigner.config import BaseEnvConfig
-from robotdesigner.robot.providers.menagerie import PROVIDER     # pip install -e ".[menagerie]"; models are fetched by the library, never copied here
+from robotenv.config import BaseEnvConfig
+from robotenv.robot.providers.menagerie import PROVIDER     # pip install -e ".[menagerie]"; models are fetched by the library, never copied here
 
 panda = PROVIDER.describe("franka_emika_panda")
 env = BaseEnvConfig().robot(panda).sim(num_envs=4, scene="plain_floor").build()

@@ -6,10 +6,10 @@ from dataclasses import dataclass
 
 import pytest
 
-import robotdesigner.tasks
-from robotdesigner.config import ConfigError, Mount, Pose, Problem, TaskConfig, list_task_providers, register_task_provider
-from robotdesigner.config import providers
-from robotdesigner.config.providers import ENTRY_POINT_GROUP, known_task_ids, params_class, split_task_id
+import robotenv.tasks
+from robotenv.config import ConfigError, Mount, Pose, Problem, TaskConfig, list_task_providers, register_task_provider
+from robotenv.config import providers
+from robotenv.config.providers import ENTRY_POINT_GROUP, known_task_ids, params_class, split_task_id
 
 BLOCKED = ["torch", "torchrl", "tensordict", "mujoco", "mujoco_warp", "warp", "robosuite"]
 
@@ -67,7 +67,7 @@ def test_split_task_id():
 
 
 def test_every_subpackage_of_tasks_is_a_registered_provider():
-    scanned = {m.name for m in pkgutil.iter_modules(robotdesigner.tasks.__path__) if m.ispkg}
+    scanned = {m.name for m in pkgutil.iter_modules(robotenv.tasks.__path__) if m.ispkg}
     assert scanned and scanned <= set(list_task_providers())
     ids = known_task_ids()
     assert all(any(i.startswith(f"{ns}/") for i in ids) for ns in scanned)
@@ -77,8 +77,8 @@ def test_config_side_of_every_provider_needs_no_engine():
     code = (
         "import sys\n"
         f"for m in {BLOCKED!r}: sys.modules[m] = None\n"
-        "from robotdesigner.config import list_task_providers\n"
-        "from robotdesigner.config.providers import known_task_ids, params_class\n"
+        "from robotenv.config import list_task_providers\n"
+        "from robotenv.config.providers import known_task_ids, params_class\n"
         "ids = known_task_ids()\n"
         "assert ids and not any('could not be loaded' in i for i in ids), ids\n"
         "for i in ids:\n"
@@ -102,7 +102,7 @@ def test_explicit_registration_and_duplicates(clean_registry):
 
 
 def test_unregister(clean_registry):
-    from robotdesigner.config import unregister_task_provider
+    from robotenv.config import unregister_task_provider
 
     register_task_provider("ext", EXT)
     unregister_task_provider("ext")

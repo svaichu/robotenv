@@ -68,16 +68,16 @@ def settings(fixed: dict[str, Any], axes: dict[str, list[Any]]) -> list[dict[str
 
 def base_config(task: str):
     """A ``BaseEnvConfig`` for ``empty/idle`` or ``robosuite/<Name>`` (Lift: the cube height; others: reach the first object)."""
-    from robotdesigner.config import BaseEnvConfig, Chain
+    from robotenv.config import BaseEnvConfig, Chain
 
     cfg = BaseEnvConfig().robot(Chain(n=3, axes="zyy", total_length=0.9, total_mass=3.0, range=(-2.5, 2.5)))
     namespace, _, name = task.partition("/")
     if (namespace, name) == ("empty", "idle"):
         return cfg
     if namespace == "robosuite":
-        from robotdesigner.tasks.robosuite import LiftObject, ReachObject, RobosuiteParams
-        from robotdesigner.config import Mount
-        from robotdesigner.tasks.robosuite.scene import load_scene
+        from robotenv.tasks.robosuite import LiftObject, ReachObject, RobosuiteParams
+        from robotenv.config import Mount
+        from robotenv.tasks.robosuite.scene import load_scene
 
         if name == "Lift":
             objective = LiftObject("cube", 0.84)
@@ -116,11 +116,11 @@ def run_setting(cfg, overrides: dict, args, simulator: str) -> dict:
 
 
 def _build(resolved, simulator: str, smoke: bool):
-    from robotdesigner.config.providers import get_task_provider
-    from robotdesigner.envs import make_env
+    from robotenv.config.providers import get_task_provider
+    from robotenv.envs import make_env
 
     if simulator == "warp" and smoke:  # make_env refuses the cpu device; this is the tests' route as well
-        from robotdesigner.simulators.warp.env import WarpEnv
+        from robotenv.simulators.warp.env import WarpEnv
 
         return WarpEnv(resolved, get_task_provider(resolved.task.params.provider).build(resolved, "warp"))
     return make_env(resolved)

@@ -8,9 +8,9 @@ placement rule of the robosuite environment `<EnvName>` and puts them into the s
 Needs the `robosuite` extra to build an environment (`pip install -e ".[env,robosuite]"`, robosuite 1.5.x). The config side on this page needs only numpy.
 
 ```python
-from robotdesigner.config import ConfigError, Mount, Pose, TaskConfig
-from robotdesigner.tasks.robosuite import LiftObject, ReachObject, RobosuiteParams
-from robotdesigner.tasks.robosuite.params import RESERVED_ENV_KWARGS
+from robotenv.config import ConfigError, Mount, Pose, TaskConfig
+from robotenv.tasks.robosuite import LiftObject, ReachObject, RobosuiteParams
+from robotenv.tasks.robosuite.params import RESERVED_ENV_KWARGS
 ```
 
 ## `RobosuiteParams(name, env_kwargs, objective, reset_noise, terminate_on_success)`
@@ -25,7 +25,7 @@ The class names the provider; `name` is the robosuite environment (`"Lift"`), so
 | `reset_noise` | `>= 0`; uniform noise (rad) on the initial joint positions |
 | `terminate_on_success` | set `terminated` when the objective is met |
 
-The arguments robotdesigner sets itself cannot appear in `env_kwargs` (`RESERVED_ENV_KWARGS`): robots, grippers, controller, control frequency, horizon, seed and everything about rendering.
+The arguments robotenv sets itself cannot appear in `env_kwargs` (`RESERVED_ENV_KWARGS`): robots, grippers, controller, control frequency, horizon, seed and everything about rendering.
 `TaskConfig` takes `success_tolerance=None` and `target_region=None`: the objective defines success.
 
 | objective | success | reward |
@@ -53,9 +53,9 @@ assert "robots" in RESERVED_ENV_KWARGS and "table_full_size" not in RESERVED_ENV
 ## Building an environment
 
 ```python no-run
-from robotdesigner import make_env
-from robotdesigner.config import BaseEnvConfig, Chain
-from robotdesigner.tasks.robosuite import LiftObject, RobosuiteParams
+from robotenv import make_env
+from robotenv.config import BaseEnvConfig, Chain
+from robotenv.tasks.robosuite import LiftObject, RobosuiteParams
 
 cfg = (
     BaseEnvConfig()
@@ -90,7 +90,7 @@ env = cfg.build()
 ## Versions
 
 robosuite 1.5.x as released fails on MuJoCo >= 3.10 while an environment is built (a joint-address comparison and the mass-matrix call).
-`robotdesigner.tasks.robosuite.apply_compat()` patches the affected code in the running process, only as far as the installed MuJoCo needs, and the provider calls it for you.
+`robotenv.tasks.robosuite.apply_compat()` patches the affected code in the running process, only as far as the installed MuJoCo needs, and the provider calls it for you.
 Call it yourself in worker processes started with `spawn`. It returns a `CompatReport` saying what it patched.
 Dynamics differ slightly between MuJoCo versions (a 60-step trajectory differed by up to 4e-3 rad between 3.9 and 3.17), so **fix the MuJoCo version of a study**.
 The placement code was verified with robosuite 1.5.1; its path for the sampler generators of 1.5.2 exists but has not been exercised here.

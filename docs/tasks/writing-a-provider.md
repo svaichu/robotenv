@@ -23,7 +23,7 @@ the field `name` says which task of the provider it is, so there is no second pl
 from dataclasses import dataclass
 from typing import ClassVar
 
-from robotdesigner.config import (
+from robotenv.config import (
     ConfigError, FixedBox, Mount, Pose, Problem, TaskConfig, list_task_providers, register_task_provider, unregister_task_provider,
 )
 
@@ -50,7 +50,7 @@ class ReachParams:
 ```
 
 `reset_noise` and `terminate_on_success` are the two params the environment looks for (`getattr`, so they are optional); everything else in the class is yours.
-For free-form mappings (keyword arguments of a library) use `robotdesigner._canon.freeze` / `thaw`, which make them immutable and hashable.
+For free-form mappings (keyword arguments of a library) use `robotenv._canon.freeze` / `thaw`, which make them immutable and hashable.
 
 ## 2. The provider object
 
@@ -87,12 +87,12 @@ PROVIDER = MyTasks()
 
 ## 3. Register it
 
-Three ways ([sources and precedence](../configs/task.md#where-tasks-come-from)): a subpackage of `robotdesigner.tasks` exposing `PROVIDER`; an entry point of another package,
+Three ways ([sources and precedence](../configs/task.md#where-tasks-come-from)): a subpackage of `robotenv.tasks` exposing `PROVIDER`; an entry point of another package,
 which is how a *project* brings its own tasks; and `register_task_provider`, which tests use and which wins over the other two.
 
 ```toml
 # pyproject.toml of your package
-[project.entry-points."robotdesigner.task_providers"]
+[project.entry-points."robotenv.task_providers"]
 mine = "my_package:PROVIDER"
 ```
 
@@ -129,14 +129,14 @@ In a worker process (a cluster job, a `spawn`ed child) the registry starts empty
 
 ## 4. The engine side
 
-Subclass `robotdesigner.tasks.base.BaseTask` (the optional hooks have defaults) and state only what the task adds. The robot, the control law, batching, masked reset, episode
+Subclass `robotenv.tasks.base.BaseTask` (the optional hooks have defaults) and state only what the task adds. The robot, the control law, batching, masked reset, episode
 counters and rendering belong to the environment. This is a trimmed `tests/toy_provider/reach.py`.
 
 ```python no-run
 import torch
 from torchrl.data import Composite, Unbounded
 
-from robotdesigner.tasks.base import BaseTask
+from robotenv.tasks.base import BaseTask
 
 
 class ReachTask(BaseTask):
@@ -185,7 +185,7 @@ class ReachTask(BaseTask):
 
 - **Draws.** `rand(*shape)` is the task's own seeded stream. It does not depend on the robot, so the same seed gives every embodiment the same draws. Always draw for the whole batch and then
   apply the mask, so the stream does not depend on which envs are reset.
-- **The simulation view.** Hooks receive a `SimView` ([`tasks/base.py`](../../src/robotdesigner/tasks/base.py)), not a simulator's internals: `num_envs`, `device`, `iface` (joint
+- **The simulation view.** Hooks receive a `SimView` ([`tasks/base.py`](../../src/robotenv/tasks/base.py)), not a simulator's internals: `num_envs`, `device`, `iface` (joint
   ranges, `ee_site_id`, the mount), `body_pose(body, frame)` and `site_pos(site, frame)` with `frame` either `"world"` or `"base"` (float32 on `device`), `write_qpos(adr, values, mask)`
   to place a free body, `base_frame()` and `host_data(env_index)`. List in `SIMULATORS` every simulator you ran the task on.
 - **Fixtures.** All envs of a batch share one model, so a scene object without a free joint is placed once, at `bind`; per-env placement needs a free joint.

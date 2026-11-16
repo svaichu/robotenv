@@ -6,7 +6,7 @@ targets hold the reset pose), with the model's options carried over and not carr
 timestep and at twice it, and prints per case: the root height and its drift from the keyframe, the trunk tilt, the largest
 penetration depth and the mean number of contacts.
 
-    python benchmarks/menagerie_options.py            # needs: pip install 'robotdesigner[menagerie]'
+    python benchmarks/menagerie_options.py            # needs: pip install 'robotenv[menagerie]'
 """
 
 import warnings
@@ -15,10 +15,10 @@ import mujoco
 import numpy as np
 import torch
 
-from robotdesigner.config import BaseEnvConfig, snapped
-from robotdesigner.envs import make_env
-from robotdesigner.robot.providers.menagerie import PROVIDER
-from robotdesigner.simulators.mujoco import external
+from robotenv.config import BaseEnvConfig, snapped
+from robotenv.envs import make_env
+from robotenv.robot.providers.menagerie import PROVIDER
+from robotenv.simulators.mujoco import external
 
 
 def stand(name: str, carry: bool, dt_factor: float, seconds: float = 2.0) -> dict:

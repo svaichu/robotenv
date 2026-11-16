@@ -4,12 +4,12 @@ A robot is a **frozen, validated, hashable value**. It has no pose and knows not
 `TaskConfig.mount`, and everything that changes how it is driven is in [`ControlConfig`](control.md) and [`SimConfig`](sim.md).
 Two consequences: the same arm object can be dropped into any scene, and `robot_hash` identifies the embodiment alone.
 
-Everything on this page is numpy only (`robotdesigner.robot`, re-exported by `robotdesigner.config`).
+Everything on this page is numpy only (`robotenv.robot`, re-exported by `robotenv.config`).
 
 ```python
 import numpy as np
 
-from robotdesigner.config import (
+from robotenv.config import (
     Capsule, ConfigError, EndEffectorRef, ExternalJoint, ExternalRobot, JointSpec, LinkSpec, ParametricArm, Pose, Segment,
     TwoFingerGripper, chain, kinematics as kin, register_robot_provider, robot_from_dict, unregister_robot_provider,
 )
@@ -126,7 +126,7 @@ Errors raised while a larger config is being parsed carry the full dotted path (
 
 ## Forward kinematics
 
-`robotdesigner.config.kinematics` is a pure-numpy oracle, independent of any simulator: the tests compare every simulator against it.
+`robotenv.config.kinematics` is a pure-numpy oracle, independent of any simulator: the tests compare every simulator against it.
 
 ```python
 fk = kin.forward(arm, np.zeros(3))
@@ -208,7 +208,7 @@ A robot provider owns a namespace, as a [task provider](../tasks/writing-a-provi
 which reads the model and returns an `ExternalRobot`; `spec(robot)`, which returns an editable `mujoco.MjSpec` after checking the model against `robot.source`;
 `validate(robot, simulator)`; and `kinematics(robot)`, which returns an oracle with `forward_ee_batch(q, base)` and `sample_joint_positions(num, rng)`. The last
 three and `describe` are engine side: importing the provider imports no engine. Providers are found lazily, in this order of precedence:
-`register_robot_provider(namespace, target)`, the entry-point group `robotdesigner.robot.providers`, then the subpackages of `robotdesigner.robot.providers`.
+`register_robot_provider(namespace, target)`, the entry-point group `robotenv.robot.providers`, then the subpackages of `robotenv.robot.providers`.
 `list_robot_providers()` loads nothing; `get_robot_provider(namespace)` loads one. The core names no provider. The one shipped provider is [`menagerie`](../robots/menagerie.md).
 
 `config.kinematics.forward_ee_batch` and `sample_joint_positions` accept an `ExternalRobot` and ask its provider for the oracle; without the engine they raise a

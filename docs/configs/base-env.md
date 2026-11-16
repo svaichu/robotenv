@@ -7,7 +7,7 @@ It is the one place in the package that holds defaults, and it ends in a frozen 
 import os
 import tempfile
 
-from robotdesigner.config import BaseEnvConfig, Chain, ConfigError, EnvConfig, FixedGains, Mount, Pose
+from robotenv.config import BaseEnvConfig, Chain, ConfigError, EnvConfig, FixedGains, Mount, Pose
 
 base = BaseEnvConfig()                                   # a one-link arm doing empty/idle on the CPU MuJoCo simulator
 cfg = (
@@ -25,7 +25,7 @@ assert base.resolve().robot.n == 1                       # every call returns a 
 
 ## Defaults
 
-`BaseEnvConfig()` (defaults version 2). These are plain choices to start from, not recommendations, and none of them is hidden: each is listed here and in `src/robotdesigner/config/defaults.py`.
+`BaseEnvConfig()` (defaults version 2). These are plain choices to start from, not recommendations, and none of them is hidden: each is listed here and in `src/robotenv/config/defaults.py`.
 
 | section | default |
 |---|---|
@@ -78,7 +78,7 @@ A ready `ExternalRobot` replaces the robot section like a ready arm. Its model h
 ```python
 from types import SimpleNamespace
 
-from robotdesigner.config import EndEffectorRef, ExternalJoint, ExternalRobot, FixedGains, register_robot_provider, unregister_robot_provider
+from robotenv.config import EndEffectorRef, ExternalJoint, ExternalRobot, FixedGains, register_robot_provider, unregister_robot_provider
 
 # a stand-in provider: the config side only needs a registered namespace
 register_robot_provider("demo", SimpleNamespace(names=lambda: ("hand",), describe=None, spec=None, validate=lambda r, s: [], kinematics=None), replace=True)
@@ -160,7 +160,7 @@ assert "robot.n" in cfg.explain() and "[set]" in cfg.explain()
 ## Files and reproducibility
 
 `to_dict()` writes the builder's fields (with `defaults_version`); `from_dict` is the inverse and accepts **short** files: sections and keys left out take the default.
-`dump(path)` and `load(path)` use JSON, or YAML for `.yaml` / `.yml` with the `yaml` extra (`pip install "robotdesigner[yaml]"`).
+`dump(path)` and `load(path)` use JSON, or YAML for `.yaml` / `.yml` with the `yaml` extra (`pip install "robotenv[yaml]"`).
 
 ```python
 with tempfile.TemporaryDirectory() as d:

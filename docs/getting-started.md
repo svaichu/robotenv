@@ -11,7 +11,7 @@ pip install -e ".[env,viz]"               # + Pillow, imageio-ffmpeg: GIF and MP
 pip install -e ".[env,dev]"               # + pytest, ruff, pyyaml
 ```
 
-Python >= 3.10. `import robotdesigner.config` works with numpy alone and never imports an engine, so you can write, validate, hash and sweep configs anywhere.
+Python >= 3.10. `import robotenv.config` works with numpy alone and never imports an engine, so you can write, validate, hash and sweep configs anywhere.
 For `warp`, `mujoco` and `mujoco-warp` must be of one release. YAML config files need the `yaml` extra.
 
 ## 1. Describe a robot
@@ -19,7 +19,7 @@ For `warp`, `mujoco` and `mujoco-warp` must be of one release. YAML config files
 The robot is data: every physical number is stated, and the result has a stable hash.
 
 ```python
-from robotdesigner.config import chain
+from robotenv.config import chain
 
 arm = chain(n=3, axes="zyy", total_length=0.9, total_mass=3.0, radius=0.03,
             damping=0.5, armature=0.01, frictionloss=0.0, effort_limit=50.0, range=(-2.5, 2.5))
@@ -34,7 +34,7 @@ assert arm.n == 3 and len(arm.config_hash) == 12
 An environment config has four parts: robot, control, task, simulation. The builder `BaseEnvConfig` starts from a complete default and changes only what you write:
 
 ```python
-from robotdesigner.config import BaseEnvConfig, Chain, FixedGains
+from robotenv.config import BaseEnvConfig, Chain, FixedGains
 
 cfg = (
     BaseEnvConfig()
@@ -75,7 +75,7 @@ The default task, `empty/idle`, asks nothing of the arm. For a real task, bring 
 With the `robosuite` extra, robosuite supplies the arena and objects, and the simulator named in `sim.simulator` steps everything with your robot:
 
 ```python no-run
-from robotdesigner.tasks.robosuite import LiftObject, RobosuiteParams
+from robotenv.tasks.robosuite import LiftObject, RobosuiteParams
 
 cfg = (
     BaseEnvConfig()
@@ -116,7 +116,7 @@ env = cfg.sim(simulator="warp", device="cuda:0", num_envs=4096).build()
 ## 7. See it
 
 ```python no-run
-from robotdesigner.viz import record_rollout
+from robotenv.viz import record_rollout
 
 traj, clip = record_rollout(env, 150, env_index=0, camera="iso")
 clip.save("run.mp4")
