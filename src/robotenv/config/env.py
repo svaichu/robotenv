@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from .._canon import HASH_DISPLAY_LENGTH, canonical_json, check_keys, sha256_hex, within
+from .._pretty import indent, pre_html
 from .control import NATIVE_MODES, ControlConfig, NativeGains
 from ..errors import ConfigError
 from ..robot import ExternalRobot, ParametricArm, robot_from_dict
@@ -58,6 +59,18 @@ class EnvConfig:
                     )
         elif isinstance(gains, NativeGains):
             raise ConfigError("control.gains", "NativeGains drives a model's own actuators: it needs an ExternalRobot")
+
+    # --- printing ------------------------------------------------------------------
+
+    def __repr__(self) -> str:
+        """The hash, then each section as it prints itself, indented."""
+        return "\n".join([
+            f"EnvConfig  env_hash={self.env_hash}",
+            *(indent(repr(s)) for s in (self.robot, self.control, self.task, self.sim)),
+        ])
+
+    def _repr_html_(self) -> str:
+        return pre_html(repr(self))
 
     # --- resolution and hashing ----------------------------------------------------
 

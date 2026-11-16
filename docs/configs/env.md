@@ -24,6 +24,19 @@ assert len(cfg.env_hash) == 12
 The four parts: [robot](robot.md), [control](control.md), [task](task.md), [sim](sim.md). To build the environment from a config:
 `env = make_env(cfg)` ([simulators](../simulators.md)). To write a config with defaults and refine it step by step: [`BaseEnvConfig`](base-env.md).
 
+## Printing
+
+`print(cfg)` shows the hash and then each part as a readable block; the arm is a table with one row per joint. Anything empty is left out: a `None` field has no line, a table
+column that no row uses is dropped, and a cell that does not apply is blank. The parts print themselves the same way (`print(cfg.sim)`), and a notebook shows the text in a
+fixed-width block. Small values (`Pose`, `FixedGains`, `Mount`, task params) keep their one-line form. Printing changes neither equality nor any hash.
+
+```python
+text = repr(cfg)
+assert text.splitlines()[0] == f"EnvConfig  env_hash={cfg.env_hash}"
+assert len(repr(cfg.robot).splitlines()) == 2 + cfg.robot.n  # a header, a column line, one row per joint
+assert "None" not in text
+```
+
 ## Hashes
 
 | hash | covers | use |

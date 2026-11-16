@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from .._canon import as_vector, check_keys
+from .._pretty import fmt
 from ..errors import ConfigError
 
 
@@ -39,6 +40,15 @@ class Pose:
     @classmethod
     def identity(cls) -> "Pose":
         return cls(pos=(0.0, 0.0, 0.0), quat=(1.0, 0.0, 0.0, 0.0))
+
+    def _short(self) -> str:
+        """How the pose prints in a table or a ``kv`` line: ``identity``, or only the part that is not the identity."""
+        parts = []
+        if self.pos != (0.0, 0.0, 0.0):
+            parts.append(f"pos={fmt(self.pos)}")
+        if self.quat != (1.0, 0.0, 0.0, 0.0):
+            parts.append(f"quat={fmt(self.quat)}")
+        return " ".join(parts) or "identity"
 
     def to_dict(self) -> dict[str, Any]:
         return {"pos": list(self.pos), "quat": list(self.quat)}

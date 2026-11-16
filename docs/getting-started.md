@@ -42,9 +42,9 @@ cfg = (
     .control(mode="joint_pos_abs", gains=FixedGains(kp=60.0, kd=6.0))
     .sim(num_envs=8, seed=0)
 )
-print(cfg.explain())                       # every field, its value, and whether you set it or it is a default
+print(cfg)                                 # every field, its value, and whether you set it or it is a default
 env_cfg = cfg.resolve()                    # the frozen, validated EnvConfig; raises one error listing every problem
-print(env_cfg.env_hash)
+print(env_cfg)                             # the hash, then robot, control, task and sim, one table row per joint
 assert env_cfg.sim.num_envs == 8
 ```
 

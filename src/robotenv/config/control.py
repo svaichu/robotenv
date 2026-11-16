@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from .._canon import as_float, check_keys, within
+from .._pretty import kv
 from ..errors import ConfigError
 
 CONTROL_MODES = (
@@ -147,6 +148,9 @@ class ControlConfig:
             object.__setattr__(self, "action_scale", scale)
         elif self.action_scale is not None:
             raise ConfigError("action_scale", f"must be None for mode {self.mode!r}")
+
+    def __repr__(self) -> str:
+        return "\n".join(["ControlConfig", *kv([("mode", self.mode), ("gains", self.gains), ("action_scale", self.action_scale)])])
 
     def to_dict(self) -> dict[str, Any]:
         return {"mode": self.mode, "gains": self.gains.to_dict(), "action_scale": self.action_scale}

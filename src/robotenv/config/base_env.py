@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from .._canon import check_keys, within
+from .._pretty import oneline, pre_html
 from .control import CONTROL_MODES, NATIVE_MODES, ControlConfig, FixedGains, NativeGains
 from .defaults import DEFAULTS, DEFAULTS_VERSION
 from .env import EnvConfig
@@ -522,6 +523,11 @@ class BaseEnvConfig:
         except Exception:  # no such method, library missing, unknown robot: nothing to show
             return None
 
+    def _render(self, rows: list[tuple[str, Any, str]]) -> str:
+        width = max(len(p) for p, _, _ in rows)
+        head = f"BaseEnvConfig (defaults version {DEFAULTS_VERSION})"
+        return "\n".join([head] + [f"  {p:<{width}}  {oneline(v)}  [{s}]" for p, v, s in rows])
+
     def explain(self) -> str:
         """Every field with its value and where it comes from: ``set``, ``default``, or, for an
         external robot, ``default (robot)``."""
@@ -529,9 +535,7 @@ class BaseEnvConfig:
         license_ = self._robot_license()
         if license_ is not None:
             rows.insert(1, ("robot.license", license_, "provider"))
-        width = max(len(p) for p, _, _ in rows)
-        head = f"BaseEnvConfig (defaults version {DEFAULTS_VERSION})"
-        return "\n".join([head] + [f"  {p:<{width}}  {v!r}  [{s}]" for p, v, s in rows])
+        return self._render(rows)
 
     def diff(self) -> dict[str, tuple[Any, Any]]:
         """``{path: (default, value)}`` against the pristine ``BaseEnvConfig()`` of this defaults version. A field
@@ -553,5 +557,13 @@ class BaseEnvConfig:
     __hash__ = None  # type: ignore[assignment]
 
     def __repr__(self) -> str:
-        changed = ", ".join(sorted(self._written)) or "nothing"
-        return f"BaseEnvConfig(defaults v{DEFAULTS_VERSION}; set: {changed})"
+        """The ``explain()`` table without the licence lookup. Never raises: a config that cannot resolve its control
+        values yet prints them as written."""
+        try:
+            rows = self._fields(resolved=True)
+        except Exception:
+            rows = self._fields(resolved=False)
+        return self._render(rows)
+
+    def _repr_html_(self) -> str:
+        return pre_html(repr(self))

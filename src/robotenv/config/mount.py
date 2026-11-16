@@ -39,6 +39,9 @@ class Mount:
         if not isinstance(self.offset, Pose):
             raise ConfigError("offset", "expected a Pose: the robot base in the scene's mount frame")
 
+    def _short(self) -> str:
+        return f"Mount({self.offset._short()})"
+
     def to_dict(self) -> dict[str, Any]:
         return {"kind": "mount", "offset": self.offset.to_dict()}
 

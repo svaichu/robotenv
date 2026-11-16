@@ -23,6 +23,7 @@ from .._canon import (
     sha256_hex,
     within,
 )
+from .._pretty import kv, table
 from ..errors import ConfigError
 from .pose import Pose
 
@@ -82,6 +83,11 @@ class EndEffectorRef:
             raise ConfigError("offset", "expected a Pose")
         if self.site is not None and self.offset != Pose.identity():
             raise ConfigError("offset", "must be the identity when a site is given: the site already is a frame")
+
+    def _short(self) -> str:
+        where = f"site {self.site}" if self.site is not None else f"body {self.body}"
+        offset = self.offset._short()
+        return where if offset == "identity" else f"{where} + {offset}"
 
     def to_dict(self) -> dict[str, Any]:
         return {"site": self.site, "body": self.body, "offset": self.offset.to_dict()}
@@ -166,6 +172,29 @@ class ExternalRobot:
     @property
     def n(self) -> int:
         return len(self.joints)
+
+    # --- printing ------------------------------------------------------------------
+
+    def _oneline(self) -> str:
+        label = f", label={self.label!r}" if self.label else ""
+        return f"ExternalRobot({self.provider}/{self.name}, n={self.n}, hash={self.config_hash}{label})"
+
+    def __repr__(self) -> str:
+        """The robot as a header, one table row per driven joint and, below it, the facts that are set. Empty columns
+        and unset facts are left out (see ``robotenv._pretty``)."""
+        head = f"ExternalRobot  {self.provider}/{self.name}  n={self.n}  hash={self.config_hash}"
+        if self.label:
+            head += f"  label={self.label}"
+        rows = [[i, j.name, j.range, j.effort_limit, self.home_qpos[i]] for i, j in enumerate(self.joints)]
+        extras = kv([
+            ("entry", self.entry),
+            ("source", self.source),
+            ("keyframe", self.keyframe),
+            ("actuator_kind", self.actuator_kind),
+            ("home_root", self.home_root),
+            ("end_effector", self.end_effector),
+        ])
+        return "\n".join([head, *table(["joint", "name", "range", "effort_limit", "home_q"], rows), *extras])
 
     # --- serialization and hashing -------------------------------------------------
 

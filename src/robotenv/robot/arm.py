@@ -15,6 +15,7 @@ from .._canon import (
     sha256_hex,
     within,
 )
+from .._pretty import kv, num, table
 from ..errors import ConfigError
 from .gripper import TwoFingerGripper
 from .pose import Pose, _normalize_quat
@@ -33,6 +34,9 @@ class Capsule:
         if r <= 0.0:
             raise ConfigError("radius", "must be > 0")
         object.__setattr__(self, "radius", r)
+
+    def _short(self) -> str:
+        return f"capsule r={num(self.radius)}"
 
     def to_dict(self) -> dict[str, Any]:
         return {"kind": "capsule", "radius": self.radius}
@@ -259,6 +263,36 @@ class ParametricArm:
     @property
     def n(self) -> int:
         return len(self.segments)
+
+    # --- printing ------------------------------------------------------------------
+
+    def _oneline(self) -> str:
+        label = f", label={self.label!r}" if self.label else ""
+        return f"ParametricArm(n={self.n}, hash={self.config_hash}{label})"
+
+    def __repr__(self) -> str:
+        """The arm as a header, one table row per joint and, below it, the parts that are set. Empty columns and
+        unset parts are left out (see ``robotenv._pretty``)."""
+        head = f"ParametricArm  n={self.n}  hash={self.config_hash}" + (f"  label={self.label}" if self.label else "")
+        identity = Pose.identity()
+        rows = [
+            [
+                i, s.joint.axis, s.joint.range, s.joint.damping, s.joint.armature, s.joint.frictionloss,
+                s.joint.effort_limit, s.link.tip_offset, s.link.mass, s.link.geometry,
+                None if s.link.joint_frame == identity else s.link.joint_frame, s.link.inertia, self.home_qpos[i],
+            ]
+            for i, s in enumerate(self.segments)
+        ]
+        headers = [
+            "joint", "axis", "range", "damping", "armature", "frictionloss", "effort_limit", "tip_offset", "mass",
+            "geometry", "joint_frame", "inertia", "home_q",
+        ]
+        extras = kv([
+            ("end_effector", None if self.end_effector == identity else self.end_effector),
+            ("tool", self.tool),
+            ("gripper", self.gripper),
+        ])
+        return "\n".join([head, *table(headers, rows), *extras])
 
     # --- serialization and hashing -------------------------------------------------
 

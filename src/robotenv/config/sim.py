@@ -12,6 +12,7 @@ from dataclasses import dataclass, fields
 from typing import Any, Mapping
 
 from .._canon import as_bool, as_float, as_int, as_str, check_keys, within
+from .._pretty import kv
 from ..errors import ConfigError
 
 INTEGRATORS = ("euler", "implicit", "implicitfast", "rk4")
@@ -138,6 +139,14 @@ class SimConfig:
     @property
     def n_substeps(self) -> int:
         return round(1.0 / (self.control_freq * self.dt))
+
+    def __repr__(self) -> str:
+        rows = [
+            ("num_envs", self.num_envs), ("device", self.device), ("dt", self.dt), ("integrator", self.integrator),
+            ("control_freq", self.control_freq), ("n_substeps", self.n_substeps), ("seed", self.seed),
+            ("scene", self.scene), ("options", self.options),
+        ]
+        return "\n".join([f"SimConfig  {self.simulator}", *kv(rows)])
 
     def to_dict(self) -> dict[str, Any]:
         d = {f.name: getattr(self, f.name) for f in fields(self) if f.name != "options"}
