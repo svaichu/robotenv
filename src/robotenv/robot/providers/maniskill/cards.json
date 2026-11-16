@@ -1,0 +1,3 @@
+{
+  "_comment": "What cannot be derived from a ManiSkill agent class, per robot (the agent's uid): 'controlled' (the driven joints, where the agent names no arm joints and not every joint of its joint-position controller should be driven), 'end_effector' (a body of the model, or a body plus an offset in the body's frame, where the agent names no end-effector link) and 'keyframe' (a keyframe other than 'rest' or the agent's first, or null for none). A key that is absent is derived; a robot without a card is derived entirely."
+}

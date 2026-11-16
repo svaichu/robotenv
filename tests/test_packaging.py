@@ -61,3 +61,22 @@ def test_menagerie_provider_imports_without_an_engine_or_the_library():
         "    raise SystemExit('no error')\n"
     )
     subprocess.run([sys.executable, "-c", code], check=True)
+
+
+def test_maniskill_provider_imports_without_an_engine_or_the_library():
+    code = (
+        "import sys\n"
+        f"for m in {BLOCKED + ['mani_skill', 'sapien']!r}: sys.modules[m] = None\n"
+        "import robotenv.config as c\n"
+        "from robotenv.robot.providers.maniskill import PROVIDER, cards\n"
+        "assert 'maniskill' in c.list_robot_providers() and PROVIDER.names() == () and isinstance(cards(), dict)\n"
+        "assert [p.path for p in PROVIDER.validate(None, 'mujoco')] == ['robot.provider']\n"
+        "for call in (lambda: PROVIDER.describe('panda'), lambda: PROVIDER.spec(None), lambda: PROVIDER.license('panda')):\n"
+        "    try:\n"
+        "        call()\n"
+        "    except c.ConfigError as e:\n"
+        "        assert e.path == 'provider' and 'robotenv[maniskill]' in e.reason, str(e)\n"
+        "    else:\n"
+        "        raise SystemExit('no error')\n"
+    )
+    subprocess.run([sys.executable, "-c", code], check=True)

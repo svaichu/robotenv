@@ -23,6 +23,9 @@ menagerie = [
     "robotenv[env]",
     "mujoco-menagerie>=2026.9.0; python_full_version >= '3.10.12'",
 ]
+# ManiSkill pins mplib==0.1.1 on Linux, which has wheels for CPython 3.10 to 3.12 only and no source distribution:
+# without the marker the extra cannot be installed (or locked into a working environment) on Python 3.13.
+maniskill = ["robotenv[env]", "mani_skill>=3.0,<3.1; python_full_version < '3.13'"]
 yaml = ["pyyaml"]
 viz = ["imageio", "imageio-ffmpeg", "pillow"]
 dev = ["pytest", "ruff", "pyyaml"]
@@ -37,4 +40,5 @@ markers = [
     "robosuite: needs the robosuite extra",
     "render: needs an OpenGL context",
     "menagerie: needs the menagerie extra and a model download",
+    "maniskill: needs the maniskill extra",
 ]
