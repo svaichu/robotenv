@@ -7,15 +7,15 @@ Measured on Warp's CPU device, 30 steps of small random actions from the keyfram
 |-------------|--------------------------------|--------|--------|--------|
 | panda_stick | native, joint_pos_delta        | 1e-6   | 1e-5   | 5e-4   |
 | panda       | native, joint_pos_delta        | 1e-6   | 1e-5   | 4e-4   |
-| both        | FixedGains(60, 6), abs         | 7e-7   | 6e-6   | 2e-5   |
-| both        | InertiaScaledGains(20, 1), abs | 1e-6   | 1e-4   | 3e-4   |
-| panda_stick | native, joint_pos_abs          | 5e-3   | 6e-2   | 1.4    |
-| panda       | native, joint_pos_abs          | 6e-6   | 4e-4   | 2e-2   |
+| panda_stick | native, joint_pos_abs          | 7e-7   | 9e-6   | 3e-4   |
+| panda       | native, joint_pos_abs          | 5e-7   | 6e-6   | 4e-4   |
+| both        | FixedGains(60, 6), abs         | 1e-6   | 1e-5   | 4e-5   |
+| both        | InertiaScaledGains(20, 1), abs | 1e-6   | 8e-5   | 3e-4   |
 
-The last two rows are **not asserted**: an absolute target far from the keyframe saturates ManiSkill's servos at their
-force limit (kp 1000, limit 100), and a saturated stiff servo amplifies float32 rounding. It is the class of mismatch
-of the Menagerie Panda's native servos; the numbers are in docs/robots/maniskill.md. Nothing in ``simulators/warp``
-was changed for these robots: gravity compensation, the finger equality and the contact excludes are taken as they are.
+Every row is asserted. The absolute mode with ManiSkill's own servos saturates them at their force limit (the target is
+far from the keyframe); it agrees because that limit is the joint's actuator-force range, see ``_model.open_spec``.
+Nothing in ``simulators/warp`` was changed for these robots: gravity compensation, the finger equality, the contact
+excludes and the joint force ranges are taken as they are.
 """
 
 import numpy as np
@@ -86,9 +86,10 @@ def test_the_arms_reset_and_step_on_warp(device, name, gains):
 
 @pytest.mark.parametrize("device", DEVICES)
 @pytest.mark.parametrize("name", ARMS)
-def test_parity_with_maniskills_own_servos_in_delta_mode(device, name):
+def test_parity_with_maniskills_own_servos(device, name):
     robot, base = config(name)
     check(base.control(mode="joint_pos_delta", action_scale=0.05).resolve(), device, robot.n)
+    check(base.control(mode="joint_pos_abs").resolve(), device, robot.n)  # saturated: the target is far from the keyframe
 
 
 @pytest.mark.parametrize("device", DEVICES)

@@ -1,0 +1,174 @@
+{
+  "allegro_hand_left": {
+    "holds": true,
+    "status": "ok"
+  },
+  "allegro_hand_right": {
+    "holds": true,
+    "status": "ok"
+  },
+  "allegro_hand_right_touch": {
+    "holds": true,
+    "status": "ok"
+  },
+  "anymal_c": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  },
+  "dclaw": {
+    "holds": true,
+    "status": "ok"
+  },
+  "fetch": {
+    "holds": true,
+    "status": "ok"
+  },
+  "fixed_inspire_hand_left": {
+    "holds": null,
+    "status": "refused: unstable"
+  },
+  "fixed_inspire_hand_right": {
+    "holds": null,
+    "status": "refused: unstable"
+  },
+  "floating_ability_hand_right": {
+    "holds": true,
+    "status": "ok"
+  },
+  "floating_inspire_hand_left": {
+    "holds": null,
+    "status": "refused: unstable"
+  },
+  "floating_inspire_hand_right": {
+    "holds": null,
+    "status": "refused: unstable"
+  },
+  "floating_panda_gripper": {
+    "holds": true,
+    "status": "ok"
+  },
+  "floating_robotiq_2f_85_gripper": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  },
+  "googlerobot": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  },
+  "humanoid": {
+    "holds": null,
+    "status": "refused: needs effort_limit"
+  },
+  "koch-v1.1": {
+    "holds": true,
+    "status": "ok"
+  },
+  "panda": {
+    "holds": true,
+    "status": "ok"
+  },
+  "panda_stick": {
+    "holds": true,
+    "status": "ok"
+  },
+  "panda_wristcam": {
+    "holds": true,
+    "status": "ok"
+  },
+  "so100": {
+    "holds": true,
+    "status": "ok"
+  },
+  "stompy": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  },
+  "trifingerpro": {
+    "holds": null,
+    "status": "ok"
+  },
+  "unitree_g1": {
+    "holds": false,
+    "status": "ok"
+  },
+  "unitree_g1_simplified_legs": {
+    "holds": true,
+    "status": "ok"
+  },
+  "unitree_g1_simplified_upper_body": {
+    "holds": true,
+    "status": "ok"
+  },
+  "unitree_g1_simplified_upper_body_right_arm": {
+    "holds": null,
+    "status": "ok"
+  },
+  "unitree_g1_simplified_upper_body_with_head_camera": {
+    "holds": true,
+    "status": "ok"
+  },
+  "unitree_go2": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  },
+  "unitree_go2_simplified_locomotion": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  },
+  "unitree_h1": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  },
+  "unitree_h1_simplified": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  },
+  "ur_10e": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  },
+  "widowx250s": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  },
+  "widowx250s_bridgedataset_flat_table": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  },
+  "widowx250s_bridgedataset_sink": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  },
+  "widowxai": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  },
+  "widowxai_wristcam": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  },
+  "xarm6_nogripper": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  },
+  "xarm6_nogripper_wristcam": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  },
+  "xarm6_robotiq": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  },
+  "xarm6_robotiq_wristcam": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  },
+  "xarm7_ability": {
+    "holds": true,
+    "status": "ok"
+  },
+  "xlerobot": {
+    "holds": null,
+    "status": "refused: not downloaded"
+  }
+}

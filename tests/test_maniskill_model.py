@@ -43,7 +43,8 @@ def test_every_controlled_joint_has_one_position_actuator_with_maniskills_gains(
         assert int(m.actuator_trntype[a]) == int(mujoco.mjtTrn.mjTRN_JOINT)
         assert m.joint(int(m.actuator_trnid[a, 0])).name == s.joint and actuator_kind(m, a) == "position"
         assert m.actuator_gainprm[a, 0] == s.kp and tuple(m.actuator_biasprm[a, :3]) == (0.0, -s.kp, -s.kd)
-        assert m.actuator_forcelimited[a] and tuple(m.actuator_forcerange[a]) == (-s.force_limit, s.force_limit)
+        j = int(m.actuator_trnid[a, 0])  # the force limit is the joint's actuator-force range, not the actuator's own
+        assert not m.actuator_forcelimited[a] and m.jnt_actfrclimited[j] and tuple(m.jnt_actfrcrange[j]) == (-s.force_limit, s.force_limit)
         assert m.actuator_ctrllimited[a] and tuple(m.actuator_ctrlrange[a]) == tuple(m.jnt_range[m.actuator_trnid[a, 0]])
 
 
@@ -115,3 +116,92 @@ def test_the_source_is_a_content_id_and_a_changed_one_is_refused():
     with pytest.raises(ConfigError) as e:
         PROVIDER.spec(replace(robot, source="0" * 64))
     assert e.value.path == "robot.source" and e.value.reason == "the model changed since this config was written"
+
+
+@pytest.mark.parametrize("name", ["so100", "koch-v1.1", "allegro_hand_right", "panda"])
+def test_a_saturated_servo_on_a_light_link_stays_stable_and_reaches_its_target(name):
+    m = model_of(name)
+    d = mujoco.MjData(m)
+    mujoco.mj_resetDataKeyframe(m, d, 0)
+    target = m.actuator_ctrlrange.mean(axis=1)  # far from the keyframe: kp times the error exceeds the force limit
+    d.ctrl[:] = target
+    for _ in range(1500):
+        mujoco.mj_step(m, d)
+    assert d.warning[mujoco.mjtWarning.mjWARN_BADQACC].number == 0
+    reached = np.array([d.qpos[m.jnt_qposadr[m.actuator_trnid[a, 0]]] for a in range(m.nu)])
+    assert np.abs(reached - target).max() < 1e-2
+
+
+# --- repairs: mesh paths, mesh formats, links without mass, floating bases ---------------------------------------
+
+
+def test_a_package_path_is_looked_up_from_the_urdfs_directory(tmp_path):
+    (tmp_path / "robot" / "meshes").mkdir(parents=True)
+    (tmp_path / "robot" / "meshes" / "a.stl").write_bytes(b"x")
+    urdf_dir = str(tmp_path / "robot")
+    here = str(tmp_path / "robot" / "meshes" / "a.stl")
+    assert _model._resolve_mesh("meshes/a.stl", urdf_dir) == here
+    assert _model._resolve_mesh("package://robot/meshes/a.stl", urdf_dir) == here  # the package is the directory itself
+    assert _model._resolve_mesh("package:/robot/meshes/a.stl", urdf_dir) == here
+    assert _model._resolve_mesh("package://robot/meshes/a.stl", str(tmp_path)) == here  # or a directory below
+    assert model_of("koch-v1.1").nq == 6  # a shipped URDF with such paths
+
+
+def test_a_mesh_mujoco_cannot_decode_is_converted_once_into_the_cache(tmp_path, monkeypatch):
+    import subprocess
+
+    monkeypatch.setenv("ROBOTENV_CACHE_DIR", str(tmp_path))
+    assert _model.cache_dir() == str(tmp_path / "maniskill" / "meshes")
+    _model._urdf_document.cache_clear()
+    before = _model.CONVERSIONS[0]
+    try:
+        assert model_of("so100").nq == 6  # its collision meshes include .ply files
+        converted = _model.CONVERSIONS[0] - before
+        cached = sorted(p.name for p in (tmp_path / "maniskill" / "meshes").iterdir())
+        assert converted == len(cached) > 0 and all(n.endswith(".stl") for n in cached)
+        _model._urdf_document.cache_clear()
+        assert model_of("so100").nq == 6 and _model.CONVERSIONS[0] - before == converted  # nothing converted twice
+        source = _model.source_id(_model.facts_of("so100"))
+    finally:
+        _model._urdf_document.cache_clear()
+    monkeypatch.delenv("ROBOTENV_CACHE_DIR")
+    _model.source_id.cache_clear()
+    assert _model.source_id(_model.facts_of("so100")) == source  # the id hashes the original files, not the cache
+    root = __import__("pathlib").Path(__file__).resolve().parents[1]
+    dirty = subprocess.run(["git", "status", "--porcelain", "--", "*.stl", "*.ply"], cwd=root, capture_output=True, text=True, check=True).stdout
+    assert dirty == "", "a mesh was written into the repository tree"
+
+
+def test_a_moving_link_without_mass_gets_a_minimal_one():
+    # the floating gripper is moved by six joints whose intermediate links are empty; MuJoCo refuses those as they are
+    m = model_of("floating_panda_gripper")
+    assert m.nq == 8
+    light = [m.body(b).name for b in range(1, m.nbody) if m.body_mass[b] == _model.EMPTY_LINK_MASS]
+    assert len(light) >= 5 and m.body_mass.max() > 1000 * _model.EMPTY_LINK_MASS
+
+
+def test_a_repeated_inertial_element_counts_once():
+    assert model_of("trifingerpro").nq == 9
+
+
+def test_a_floating_base_agent_gets_a_free_root_with_the_keyframes_pose():
+    f = _model.facts_of("unitree_g1")
+    assert not f.fix_root_link and not f.gravity_compensated
+    m = model_of("unitree_g1")
+    root = mujoco.mj_name2id(m, O.mjOBJ_JOINT, _model.ROOT_JOINT)
+    assert root >= 0 and m.jnt_type[root] == mujoco.mjtJoint.mjJNT_FREE and m.nq == len(f.joint_order) + 7
+    key = mujoco.mj_name2id(m, O.mjOBJ_KEY, "standing")
+    a = m.jnt_qposadr[root]
+    standing = next(k for k in f.keyframes if k.name == "standing")
+    assert tuple(m.key_qpos[key][a : a + 7]) == pytest.approx((*standing.pos, *standing.quat)) and standing.pos[2] > 0.5
+    assert (m.body_gravcomp == 0.0).all()  # a floating robot carries its weight, in ManiSkill too
+    robot = PROVIDER.describe("unitree_g1")
+    assert robot.home_root.pos == pytest.approx(standing.pos) and robot.n == 37 and robot.end_effector is None
+
+
+def test_jointed_links_never_collide_even_where_the_parent_is_welded_to_the_world():
+    m = model_of("allegro_hand_right")  # no SRDF: every exclude is a pair of jointed links
+    d = mujoco.MjData(m)
+    mujoco.mj_resetDataKeyframe(m, d, 0)
+    mujoco.mj_forward(m, d)
+    assert m.nexclude == m.nbody - 2 and d.ncon == 0

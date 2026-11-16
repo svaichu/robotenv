@@ -6,14 +6,20 @@ SAPIEN. :func:`facts_of` reads what is needed from the class without building a 
 
 - fixed links are kept as bodies (MuJoCo's URDF import would fuse them, and an agent's end-effector link is one);
 - one position actuator per joint of the agent's joint-position controller, with ManiSkill's stiffness as ``kp``, its
-  damping as ``kd`` and its force limit as the actuator's force range (a URDF has no actuators);
+  damping as ``kd`` and its force limit as the joint's actuator-force range (a URDF has no actuators);
 - the agent's keyframes, mapped onto MuJoCo's joints **by name**: a ManiSkill keyframe is in SAPIEN's joint order
   (breadth first), MuJoCo's is depth first;
-- the collision pairs the model's SRDF disables, as contact excludes;
+- contact excludes for every pair of jointed links (SAPIEN never collides those; MuJoCo does where the parent is
+  welded to the world) and for the pairs the model's SRDF disables;
 - gravity compensation on every body where ManiSkill "balances the passive force" (its default; for PhysX that means
   gravity is switched off on the robot's links), as MuJoCo's ``gravcomp``: the stiffness and force limit of the
   controller are tuned for a robot that does not carry its own weight;
+- a free joint on the root body of an agent whose root link is not fixed, with the root pose of each keyframe;
 - the friction ManiSkill gives single links. SAPIEN's contact patch radius has no MuJoCo counterpart and is dropped.
+
+Repairs, applied to every model that needs them: ``package://`` mesh paths are resolved, collision meshes in a
+format MuJoCo does not decode are converted once into a cache directory outside the repository (:func:`cache_dir`),
+inertia is balanced, and a moving link without mass gets a minimal one.
 
 Visual geometry is discarded: the model that is simulated, and rendered, is the collision geometry. The contact and
 solver options of the model are not carried over (the scene's win, as for every external robot).
@@ -24,9 +30,11 @@ from __future__ import annotations
 import functools
 import hashlib
 import os
+import re
 import tempfile
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
+from types import SimpleNamespace
 
 import mujoco
 import numpy as np
@@ -40,7 +48,9 @@ _JOINT = mujoco.mjtObj.mjOBJ_JOINT
 _ON = mujoco.mjtLimited.mjLIMITED_TRUE
 NO_LIMIT = 1e9  # ManiSkill's "no force limit" is 1e10; anything this large is not a limit
 POSITION_MODES = ("pd_joint_pos",)  # the controller whose gains become the native actuators
-ROOT_JOINT = "root"  # the free joint added to the root body of a floating-base agent
+ROOT_JOINT = "floating_base"  # the free joint added to the root body of a floating-base agent
+MUJOCO_MESHES = (".stl", ".obj", ".msh")  # the mesh formats MuJoCo decodes
+EMPTY_LINK_MASS, EMPTY_LINK_INERTIA = 1e-4, 1e-7  # kg, kg m^2: see _give_mass_to_empty_moving_links
 
 
 @dataclass(frozen=True)
@@ -108,10 +118,43 @@ def _download_hint(path: str) -> str:
     return generic
 
 
-def _controller_leaves(cls, uid: str) -> tuple[list, bool]:
+class _Articulation:
+    """What an agent's controller configs read of its SAPIEN articulation: the active joints, in SAPIEN's order."""
+
+    def __init__(self, joint_order: tuple[str, ...]):
+        self.active_joints = [SimpleNamespace(name=n) for n in joint_order]
+        self.active_joints_map = {j.name: j for j in self.active_joints}
+
+    def get_active_joints(self):
+        return self.active_joints
+
+
+def _bare_agent(cls, joint_order: tuple[str, ...]):
+    """An instance of the agent class that was never built: no scene, no articulation.
+
+    Some agents set the joint names their controllers use in ``__init__`` before they hand over to the base class, and
+    some read the articulation's active joints. The constructor is run with the base class's ``__init__`` (which builds
+    the articulation in a scene) replaced by a no-op, and ``robot`` is a stand-in that knows the joint order.
+    """
+    from mani_skill.agents.base_agent import BaseAgent
+
+    agent = object.__new__(cls)
+    original = BaseAgent.__init__
+    BaseAgent.__init__ = lambda self, *args, **kwargs: None
+    try:
+        cls.__init__(agent, None, 20)
+    except Exception:  # noqa: BLE001, S110  (a constructor that needs the scene: the class attributes may still do)
+        pass
+    finally:
+        BaseAgent.__init__ = original
+    agent.robot = _Articulation(joint_order)
+    return agent
+
+
+def _controller_leaves(cls, uid: str, joint_order: tuple[str, ...]) -> tuple[list, bool]:
     """``(parts, balance_passive_force)`` of the agent's joint-position controller, without building the agent."""
     try:
-        configs = cls._controller_configs.fget(object.__new__(cls))  # a property that reads class attributes
+        configs = cls._controller_configs.fget(_bare_agent(cls, joint_order))
     except Exception as e:
         raise ConfigError("name", f"the controllers of maniskill/{uid} cannot be read without building it: {type(e).__name__}: {e}") from e
     for mode in POSITION_MODES:
@@ -125,9 +168,9 @@ def _controller_leaves(cls, uid: str) -> tuple[list, bool]:
     return [p for p in parts if hasattr(p, "joint_names")], balance
 
 
-def _servos(cls, uid: str) -> tuple[tuple[Servo, ...], bool]:
+def _servos(cls, uid: str, joint_order: tuple[str, ...]) -> tuple[tuple[Servo, ...], bool]:
     out: dict[str, Servo] = {}
-    parts, balance = _controller_leaves(cls, uid)
+    parts, balance = _controller_leaves(cls, uid, joint_order)
     for part in parts:
         names = list(part.joint_names)
         if not hasattr(part, "stiffness"):  # a passive part: its joints have no drive
@@ -209,7 +252,8 @@ def facts_of(uid: str) -> AgentFacts:
         pose = key.pose
         keyframes.append(Keyframe(str(name), qpos, tuple(float(x) for x in pose.p), tuple(float(x) for x in pose.q)))
     srdf = os.path.splitext(path)[0] + ".srdf"
-    servos, balance = _servos(cls, uid)
+    servos, balance = _servos(cls, uid, order)
+    agent = _bare_agent(cls, order)  # attributes an agent sets in its constructor count too
     return AgentFacts(
         uid=uid,
         path=path,
@@ -219,8 +263,8 @@ def facts_of(uid: str) -> AgentFacts:
         disable_self_collisions=bool(getattr(cls, "disable_self_collisions", False)),
         gravity_compensated=balance,
         keyframes=tuple(keyframes),
-        ee_link=getattr(cls, "ee_link_name", None) or None,
-        arm_joints=tuple(getattr(cls, "arm_joint_names", None) or ()),
+        ee_link=getattr(agent, "ee_link_name", None) or None,
+        arm_joints=tuple(getattr(agent, "arm_joint_names", None) or ()),
         servos=servos,
         joint_order=order,
         friction=_friction(cls),
@@ -238,8 +282,75 @@ def _mjcf_joint_order(path: str) -> tuple[str, ...]:
 
 
 def _resolve_mesh(filename: str, urdf_dir: str) -> str:
-    """The absolute path of a mesh a URDF names, relative to the URDF's directory."""
-    return os.path.normpath(os.path.join(urdf_dir, filename))
+    """The absolute path of a mesh a URDF names: relative to the URDF's directory, or ``package://<pkg>/<path>``,
+    which is looked up as ``<dir>/<path>`` and ``<dir>/<pkg>/<path>`` in the URDF's directory and its ancestors."""
+    match = re.match(r"package:/+([^/]+)/(.*)", filename)
+    if match is None:
+        return os.path.normpath(os.path.join(urdf_dir, filename))
+    package, rest = match.groups()
+    folder = urdf_dir
+    for _ in range(4):
+        for candidate in (os.path.join(folder, rest), os.path.join(folder, package, rest)):
+            if os.path.exists(candidate):
+                return os.path.normpath(candidate)
+        folder = os.path.dirname(folder)
+    return os.path.normpath(os.path.join(urdf_dir, rest))
+
+
+def cache_dir() -> str:
+    """Where converted meshes are kept: ``$ROBOTENV_CACHE_DIR``, else the user's cache directory. Never the repository."""
+    root = os.environ.get("ROBOTENV_CACHE_DIR") or os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache"), "robotenv")
+    return os.path.join(root, "maniskill", "meshes")
+
+
+CONVERSIONS = [0]  # how many meshes this process converted (a cached one is not counted)
+
+
+def _readable_mesh(path: str) -> str:
+    """``path`` if MuJoCo decodes its format, else the path of an STL converted once with ``trimesh`` into the cache.
+    The cached file is named after the content of the original, so a changed mesh is converted again."""
+    if os.path.splitext(path)[1].lower() in MUJOCO_MESHES:
+        return path
+    h = hashlib.sha256()
+    _digest_file(h, "", path)
+    target = os.path.join(cache_dir(), h.hexdigest()[:32] + ".stl")
+    if not os.path.exists(target):
+        import trimesh
+
+        try:
+            mesh = trimesh.load(path, force="mesh")
+            if len(mesh.faces) == 0:
+                raise ValueError("no faces")
+        except Exception as e:
+            raise ConfigError("name", f"the mesh {os.path.basename(path)} cannot be converted for MuJoCo: {type(e).__name__}: {e}") from e
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        partial = f"{target}.{os.getpid()}.tmp"
+        mesh.export(partial, file_type="stl")
+        os.replace(partial, target)
+        CONVERSIONS[0] += 1
+    return target
+
+
+def _give_mass_to_empty_moving_links(root: ET.Element) -> None:
+    """A link that a joint moves must have mass in MuJoCo; SAPIEN accepts one without. URDFs use such links as the
+    intermediate frames of a chain of joints (a floating gripper's ``root_x`` / ``root_y`` / ``root_z``). A moving link
+    whose mass is missing or zero gets ``EMPTY_LINK_MASS`` and ``EMPTY_LINK_INERTIA``, small against any real link."""
+    moved = {j.find("child").get("link") for j in root.findall("joint") if j.get("type") != "fixed" and j.find("child") is not None}
+    for link in root.findall("link"):
+        for extra in link.findall("inertial")[1:]:  # a repeated element: the first counts, as for the URDF parsers
+            link.remove(extra)
+        if link.get("name") not in moved:
+            continue
+        inertial = link.find("inertial")
+        mass = inertial.find("mass") if inertial is not None else None
+        if mass is not None and float(mass.get("value", 0.0)) > 0.0:
+            continue
+        if inertial is not None:
+            link.remove(inertial)
+        inertial = ET.SubElement(link, "inertial")
+        ET.SubElement(inertial, "mass", value=repr(EMPTY_LINK_MASS))
+        i = repr(EMPTY_LINK_INERTIA)
+        ET.SubElement(inertial, "inertia", ixx=i, iyy=i, izz=i, ixy="0", ixz="0", iyz="0")
 
 
 @functools.cache
@@ -256,8 +367,9 @@ def _urdf_document(path: str) -> tuple[str, tuple[str, ...]]:
                 resolved = _resolve_mesh(mesh.get("filename"), urdf_dir)
                 if not os.path.exists(resolved):
                     raise ConfigError("name", f"{os.path.basename(path)} names a mesh that is not on disk: {mesh.get('filename')}")
-                mesh.set("filename", resolved)
-                meshes.append(resolved)
+                mesh.set("filename", _readable_mesh(resolved))
+                meshes.append(resolved)  # the original: the converted bytes do not enter the source id
+    _give_mass_to_empty_moving_links(root)
     for el in root.findall("mujoco"):
         root.remove(el)
     extension = ET.SubElement(root, "mujoco")
@@ -340,12 +452,18 @@ def open_spec(facts: AgentFacts) -> mujoco.MjSpec:
         # PhysX integrates a joint drive implicitly, and ManiSkill's damping is tuned for that: an explicit integrator
         # makes these servos chatter. A model states the integrator it needs in its own option (the scene's still wins).
         spec.option.integrator = mujoco.mjtIntegrator.mjINT_IMPLICITFAST
+    if not facts.fix_root_link and not any(int(j.type) == _FREE for j in spec.joints):
+        root = spec.worldbody.first_body()
+        if root is None:
+            raise ConfigError("name", f"the model of maniskill/{facts.uid} has no root body to float")
+        root.add_freejoint(name=ROOT_JOINT)
     try:
         model = spec.compile()
     except Exception as e:
         raise ConfigError("name", f"the model of maniskill/{facts.uid} does not compile in MuJoCo: {e}") from e
     joint = lambda name: mujoco.mj_name2id(model, _JOINT, name)
     bodies = {model.body(b).name for b in range(model.nbody)}
+    free = [j for j in range(model.njnt) if int(model.jnt_type[j]) == _FREE]
 
     has_actuator = {int(model.actuator_trnid[a, 0]) for a in range(model.nu) if int(model.actuator_trntype[a]) == int(mujoco.mjtTrn.mjTRN_JOINT)}
     added: list[int] = []  # joint ids of the actuators added, in actuator order
@@ -360,19 +478,27 @@ def open_spec(facts: AgentFacts) -> mujoco.MjSpec:
         act.biastype = mujoco.mjtBias.mjBIAS_AFFINE
         act.biasprm[:3] = [0.0, -servo.kp, -servo.kd]
         if servo.force_limit is not None:
-            act.forcelimited = _ON
-            act.forcerange = [-servo.force_limit, servo.force_limit]
+            # The limit goes on the joint (its actuator-force range), not on the actuator: MuJoCo's implicit integrators
+            # drop the damping term of an actuator whose own force range clamps it, and a saturated servo on a light
+            # link then diverges (measured on so100, koch-v1.1 and the Allegro hand). The clamped quantity is the same.
+            driven = spec.joint(servo.joint)
+            driven.actfrclimited = _ON
+            driven.actfrcrange = [-servo.force_limit, servo.force_limit]
         if model.jnt_limited[j]:
             act.ctrllimited = _ON
             act.ctrlrange = [float(x) for x in model.jnt_range[j]]
         added.append(j)
 
+    # A link never collides with the link it is jointed to in SAPIEN. MuJoCo filters parent and child too, except where
+    # the parent is welded to the world, which the base link of a fixed robot is: those pairs are excluded here.
+    pairs = [(model.body(int(model.body_parentid[b])).name, model.body(b).name) for b in range(1, model.nbody) if model.body_parentid[b] > 0]
     if facts.srdf is not None:
-        done = set()
-        for a, b in _disabled_pairs(facts.srdf):
-            if a in bodies and b in bodies and frozenset((a, b)) not in done:
-                done.add(frozenset((a, b)))
-                spec.add_exclude(bodyname1=a, bodyname2=b)
+        pairs += [(a, b) for a, b in _disabled_pairs(facts.srdf) if a in bodies and b in bodies]
+    done = set()
+    for a, b in pairs:
+        if frozenset((a, b)) not in done:
+            done.add(frozenset((a, b)))
+            spec.add_exclude(bodyname1=a, bodyname2=b)
     if facts.disable_self_collisions:
         for geom in spec.geoms:  # collides with the world's default geoms (1 / 1), not with the robot's own
             geom.contype, geom.conaffinity = 2, 1
@@ -392,6 +518,9 @@ def open_spec(facts: AgentFacts) -> mujoco.MjSpec:
             if j < 0:
                 raise ConfigError("name", f"keyframe {key.name!r} of maniskill/{facts.uid} sets {name!r}, which the model does not have")
             qpos[model.jnt_qposadr[j]] = value
+        if free and not facts.fix_root_link:  # the keyframe's root pose, in the model's world frame
+            a = model.jnt_qposadr[free[0]]
+            qpos[a : a + 7] = [*key.pos, *key.quat]
         ctrl = list(model.key_ctrl[0]) if model.nkey else [0.0] * model.nu  # an MJCF's own actuators keep their value
         ctrl += [float(qpos[model.jnt_qposadr[j]]) for j in added]
         spec.add_key(name=key.name, qpos=qpos.tolist(), ctrl=ctrl)
