@@ -66,7 +66,7 @@ assert (env_cfg.robot.config_hash, env_cfg.env_hash) == (cfg.resolve().robot.con
 | [Development](development.md) | layout, tests and markers, how the docs are tested, adding a simulator |
 
 The Python examples in these pages are executed by `tests/test_docs.py` (blocks fenced `python no-run` need an engine and are not), and every link and anchor is checked.
-Runnable notebooks are in [`examples/`](../examples).
+Runnable notebooks are in [`examples/`](../examples); [`mount.ipynb`](../examples/mount.ipynb) is the short one on placing a robot (`Mount`, `MobileMount`).
 
 ## Words used in these docs
 

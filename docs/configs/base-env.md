@@ -31,7 +31,7 @@ assert base.resolve().robot.n == 1                       # every call returns a 
 |---|---|
 | robot | `Chain(n=1, axes="z", total_length=0.5, total_mass=1.0, radius=0.03, damping=0.5, armature=0.01, frictionloss=0.0, effort_limit=50.0, range=(-2.5, 2.5))` |
 | control | `joint_pos_abs`, `FixedGains(kp=60.0, kd=6.0)`, `action_scale=None` |
-| task | `empty/idle`, `max_episode_steps=200`, no goal fields; the mount is `Mount()` (snapped onto the scene's frame) |
+| task | `empty/idle`, `max_episode_steps=200`, no goal fields; the mount is not written, so it follows the robot: `Mount()` for a fixed-base robot, `MobileMount()` for a floating-base one (both snapped onto the scene's frame) |
 | sim | `mujoco`, 1 env, `cpu`, `dt=0.002`, `euler`, `control_freq=50.0`, `seed=0`, scene `empty`, the simulator's default options |
 
 Changing a default changes the `env_hash` of every config that relied on it, so `DEFAULTS_VERSION` is raised with it. The version is written into every file
@@ -59,9 +59,9 @@ assert swapped.resolve().robot.segments[0].link.tip_offset[0] == 0.2
 
 ### The mount
 
-`mount` is an ordinary field with the default `Mount()`: the arm is snapped onto the scene's mount frame ([task](task.md#mount)). `.task(mount=Mount(offset=Pose(...)))`
+`mount` is an ordinary field. Until you write it, it follows the robot (`snapped(robot)`): `Mount()` for a fixed-base robot, `MobileMount()` for a floating-base one, so a legged robot needs no `mount=` to build. Either way the robot is snapped onto the scene's mount frame ([task](task.md#mount)). `.task(mount=Mount(offset=Pose(...)))`
 shifts it in the frame's axes and `.task(mount=MobileMount(spawn=(x, y), heading=...))` places a floating-base robot. `resolve()` calls no provider and needs no engine; the
-world pose is `world_mount(cfg)`. `to_dict()` always writes the mount, and `with_overrides` reaches into it (`task.mount.offset.pos`).
+world pose is `world_mount(cfg)`. `to_dict()` always writes the mount (the robot's, if you did not), and `with_overrides` reaches into it (`task.mount.offset.pos`).
 
 ```python
 pinned = cfg.task(mount=Mount(Pose((0.1, 0.0, 0.0), (1.0, 0.0, 0.0, 0.0))))

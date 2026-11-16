@@ -25,7 +25,7 @@ from .robot_providers import get_robot_provider
 from ..robot import ExternalRobot, ParametricArm, Pose, ToolSpec, TwoFingerGripper, robot_from_dict
 from .sim import SIMULATOR_OPTIONS, SimConfig
 from .specs import NOT_SET, Chain
-from .mount import Mount
+from .mount import Mount, snapped
 from .task import TaskConfig, migrate_task_dict
 
 __all__ = ["BaseEnvConfig"]
@@ -205,6 +205,11 @@ class BaseEnvConfig:
 
     # --- resolution ------------------------------------------------------------------
 
+    def _mount(self):
+        """The mount: the one written, else the one that snaps the robot onto the scene's frame (``Mount()`` for a
+        fixed-base robot, ``MobileMount()`` for a floating-base one)."""
+        return self._task["mount"] if "task.mount" in self._written else snapped(self._robot)
+
     def _resolved_control(self) -> tuple[dict[str, Any], dict[str, str]]:
         """The control values and, for those the robot decided, the source ``default (robot)``. An external robot whose
         gains were not written is driven by its own actuators (``NativeGains``), and an unwritten mode is the default
@@ -236,7 +241,7 @@ class BaseEnvConfig:
         attempt("control", lambda: ControlConfig(**self._resolved_control()[0]))
 
         def task():
-            return TaskConfig(**self._task)
+            return TaskConfig(**{**self._task, "mount": self._mount()})
 
         def sim():
             s = dict(self._sim)
@@ -287,7 +292,7 @@ class BaseEnvConfig:
         t = self._task
         task = {"provider": t["params"].provider, "params": t["params"].to_dict(), "max_episode_steps": t["max_episode_steps"],
                 "success_tolerance": t["success_tolerance"], "target_region": _jsonable(t["target_region"])}
-        task["mount"] = _jsonable(t["mount"])
+        task["mount"] = _jsonable(self._mount())
         sim = {k: self._sim[k] for k in _SIM_FIELDS if k != "options"}
         if self._sim["options"] is not NOT_SET:
             sim["options"] = self._sim["options"].to_dict()
@@ -503,7 +508,8 @@ class BaseEnvConfig:
         out += [(f"control.{k}", control[k], by_robot.get(k) or src(f"control.{k}")) for k in _CONTROL_FIELDS]
         out.append(("task.params", self._task["params"], src("task.params")))
         for k in _TASK_FIELDS:
-            out.append((f"task.{k}", self._task[k], src(f"task.{k}")))
+            value = self._mount() if k == "mount" and resolved else self._task[k]
+            out.append((f"task.{k}", value, src(f"task.{k}")))
         out += [(f"sim.{k}", self._sim[k], src(f"sim.{k}")) for k in _SIM_FIELDS]
         return out
 

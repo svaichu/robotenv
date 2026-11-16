@@ -152,3 +152,16 @@ def test_mount_and_robot_kind_must_agree():
     with pytest.raises(ConfigError, match=r"^task.mount: .*floating base.*MobileMount"):
         replace(cfg, robot=robot, task=replace(cfg.task, mount=Mount()))
     replace(cfg, robot=robot, task=replace(cfg.task, mount=MobileMount((1, 2), 0.3)))  # fits
+
+
+def test_the_builders_default_mount_follows_the_robot():
+    cfg = BaseEnvConfig().robot(floater())
+    assert cfg.resolve().task.mount == MobileMount()  # a floating base needs no mount= to build
+    assert cfg.to_dict()["task"]["mount"]["kind"] == "mobile_mount"
+    assert BaseEnvConfig.from_dict(cfg.to_dict()).resolve() == cfg.resolve()
+    assert BaseEnvConfig().resolve().task.mount == Mount()
+    placed = cfg.task(mount=MobileMount((1.0, 2.0), 0.3))  # a written mount is kept
+    assert placed.resolve().task.mount == MobileMount((1.0, 2.0), 0.3)
+    with pytest.raises(ConfigError, match=r"^task.mount: .*floating base"):
+        cfg.task(mount=Mount()).resolve()  # a written one that does not fit is still an error
+    assert "MobileMount" in cfg.explain() and "default" in cfg.explain()
