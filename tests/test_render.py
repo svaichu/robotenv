@@ -56,6 +56,48 @@ def test_env_render_is_gymnasium_style():
         env.render(0, size=(0, 10))
 
 
+def test_render_grid_shifts_each_env_by_its_grid_offset():
+    """Scene assembly without a GL context: a stub renderer receives a real mjvScene."""
+    from types import SimpleNamespace
+
+    from robotenv.simulators.mujoco import render as R
+
+    env = _env(4)
+    env.reset()
+    scene = mujoco.MjvScene(env._sim.model, 10000)
+    stub = SimpleNamespace(scene=scene, render=lambda: np.zeros((48, 64, 3), np.uint8))
+    R.get_renderer(env)._ensure = lambda h, w, max_geom=10000: stub
+    out = env.render_grid(size=(48, 64), spacing=1.0, ncols=2, overlays=False)
+    assert out.shape == (48, 64, 3)
+    data = mujoco.MjData(env._sim.model)
+    mujoco.mj_forward(env._sim.model, data)
+    single = mujoco.MjvScene(env._sim.model, 10000)
+    mujoco.mjv_updateScene(env._sim.model, data, mujoco.MjvOption(), None, mujoco.MjvCamera(),
+                           mujoco.mjtCatBit.mjCAT_ALL, single)
+    per = single.ngeom
+    assert scene.ngeom == 4 * per
+    xy = np.array([scene.geoms[g].pos[:2] for g in range(scene.ngeom)]).reshape(4, per, 2)
+    # envs share the reset pose of the robot, so each block is env 0's block moved by its offset
+    for k, off in enumerate([(0, 0), (1, 0), (0, 1), (1, 1)]):
+        np.testing.assert_allclose(xy[k] - xy[0], np.broadcast_to(off, (per, 2)), atol=0.05)
+
+
+@pytest.mark.render
+@needs_gl
+def test_render_grid_draws_every_env_in_one_scene():
+    env = _env(4)
+    env.reset()
+    one = env.render(0, size=(96, 128))
+    grid = env.render_grid(size=(96, 128))
+    assert grid.shape == (96, 128, 3) and grid.dtype == np.uint8 and grid.mean() > 1.0
+    assert not np.array_equal(grid, one)
+    assert env.render_grid([0, 2], size=(48, 64), spacing=1.0, ncols=2).shape == (48, 64, 3)
+    with pytest.raises(IndexError):
+        env.render_grid([9])
+    with pytest.raises(ValueError):
+        env.render_grid(camera="some_model_camera")
+
+
 @pytest.mark.render
 @needs_gl
 def test_rendering_leaves_the_simulation_untouched():
@@ -175,9 +217,11 @@ def test_record_rollout_end_to_end(tmp_path):
     from robotenv.viz import record_rollout
 
     env = _env(2)
-    traj, clip = record_rollout(env, 6, env_index="all", size=(48, 64))
+    traj, clip = record_rollout(env, 6, env_index="all", size=(48, 64), layout="tile")
     assert traj.shape[-1] == 6 and len(clip) == 7  # initial state + 6 steps
     assert clip.fps == 50.0 and clip.size == (48 + 2 * 2, 2 * 64 + 3 * 2)
+    traj, shared = record_rollout(env, 6, size=(48, 64))  # default: every env in one shared scene
+    assert len(shared) == 7 and shared.size == (48, 64)
     assert clip.save(tmp_path / "run.gif").stat().st_size > 0
 
 

@@ -15,6 +15,8 @@ from .frames import annotate, tile
 
 def _indices(env, env_index) -> list[int]:
     n = int(env.batch_size[0])
+    if env_index is None:  # every env of a batch, the one env of a single
+        return list(range(n))
     if isinstance(env_index, str):
         if env_index != "all":
             raise ValueError("env_index must be an int, a sequence of ints or 'all'")
@@ -43,7 +45,7 @@ class FrameRecorder:
     def __init__(
         self,
         env,
-        env_index: int | Sequence[int] | str = 0,
+        env_index: int | Sequence[int] | str | None = None,
         *,
         every: int = 1,
         camera: Any = None,
@@ -52,7 +54,11 @@ class FrameRecorder:
         label: bool | None = None,
         overlays: bool = True,
         ncols: int | None = None,
+        layout: str = "scene",
+        spacing: float | None = None,
     ):
+        if layout not in ("scene", "tile"):
+            raise ValueError(f"layout must be 'scene' or 'tile', got {layout!r}")
         if int(every) < 1:
             raise ValueError(f"every must be >= 1, got {every}")
         self.env = env
@@ -64,6 +70,8 @@ class FrameRecorder:
         self.label = len(self.indices) > 1 if label is None else bool(label)
         self.overlays = overlays
         self.ncols = ncols
+        self.layout = layout
+        self.spacing = spacing
         self.frames: list[np.ndarray] = []
         self.steps: list[int] = []  # env step of every stored frame
         self._step = 0
@@ -72,6 +80,14 @@ class FrameRecorder:
         """Store a frame of the live state (ignored if that step is already stored)."""
         step = self._step if step is None else int(step)
         if self.steps and self.steps[-1] == step:
+            return
+        if len(self.indices) > 1 and self.layout == "scene":
+            f = self.env.render_grid(
+                self.indices, camera=self.camera, size=self.size, overlays=self.overlays,
+                spacing=self.spacing, ncols=self.ncols,
+            )
+            self.frames.append(annotate(f, f"step {step}") if self.label else f)
+            self.steps.append(step)
             return
         views = []
         for i in self.indices:
@@ -111,7 +127,7 @@ def record_rollout(
     steps: int,
     policy=None,
     *,
-    env_index: int | Sequence[int] | str = 0,
+    env_index: int | Sequence[int] | str | None = None,
     every: int = 1,
     camera: Any = None,
     size: tuple[int, int] = (240, 320),
@@ -119,20 +135,27 @@ def record_rollout(
     label: bool | None = None,
     overlays: bool = True,
     ncols: int | None = None,
+    layout: str = "scene",
+    spacing: float | None = None,
     reset_td=None,
     **rollout_kwargs,
 ):
     """Reset, run ``env.rollout(steps, policy)`` and render the live state after every ``every``-th step.
 
     Returns ``(trajectory, clip)``. The clip holds the initial state, every ``every``-th state and the final
-    state, so a full run of ``steps`` steps has ``steps + 1`` frames at ``every=1``. ``reset_td`` is passed to
+    state, so a full run of ``steps`` steps has ``steps + 1`` frames at ``every=1``.
+
+    ``env_index=None`` (default) records every env: with more than one, ``layout="scene"`` draws them all in one shared
+    world on a grid (``spacing`` metres apart, ``ncols`` columns), and ``layout="tile"`` renders each separately and
+    tiles the images, labelled. Pass an int or a list to record only those envs. ``reset_td`` is passed to
     ``env.reset`` (for example to inject ``target``). Other keyword arguments go to ``env.rollout``.
     """
     for key in ("callback", "auto_reset", "tensordict"):
         if key in rollout_kwargs:
             raise TypeError(f"record_rollout sets {key!r} itself; do not pass it")
     rec = FrameRecorder(
-        env, env_index, every=every, camera=camera, size=size, fps=fps, label=label, overlays=overlays, ncols=ncols
+        env, env_index, every=every, camera=camera, size=size, fps=fps, label=label, overlays=overlays, ncols=ncols,
+        layout=layout, spacing=spacing,
     )
     td0 = env.reset() if reset_td is None else env.reset(reset_td)
     rec.capture(0)

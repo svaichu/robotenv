@@ -60,9 +60,22 @@ assert (cam_both.azimuth, cam_both.elevation) == VIEWS["iso"]
 
 With the same seed the arms also get the same task draws ([seeding](simulators.md#seeding)), so the scenes are the same except for the robot. Or use a fixed arena camera of the scene.
 
+## Several envs in one picture
+
+`env.render_grid(env_indices=None, *, camera=None, size=(480, 640), overlays=True, spacing=None, ncols=None)` renders the given envs (default all) in one scene on a grid. `camera` is a preset view, a `CameraSpec` or an `mujoco.MjvCamera`
+(a camera that belongs to the model sits in env 0's world, so it is refused). The default camera frames the whole grid, as `grid_camera(cfg, offsets)` does; `grid_offsets(n, spacing, ncols)` and `default_spacing(cfg)` give the layout.
+If a scene is wider than its workspace (a robosuite table, say), pass a larger `spacing`.
+
+```python
+from robotenv.viz import grid_offsets
+
+offs = grid_offsets(6, 1.0)                       # 3 columns x 2 rows, env 0 at the origin
+assert offs.shape == (6, 3) and offs[0].tolist() == [0, 0, 0] and offs[5].tolist() == [2.0, 1.0, 0.0]
+```
+
 ## Recording a rollout
 
-`record_rollout(env, steps, policy=None, *, env_index=0, every=1, camera=None, size=(240, 320), fps=None, label=None, overlays=True, ncols=None, reset_td=None, **rollout_kwargs)`
+`record_rollout(env, steps, policy=None, *, env_index=None, every=1, camera=None, size=(240, 320), fps=None, label=None, overlays=True, ncols=None, layout="scene", spacing=None, reset_td=None, **rollout_kwargs)`
 resets, runs `env.rollout`, renders after every `every`-th step and returns `(trajectory, clip)`. The clip holds the initial state, every `every`-th state and the final state (`steps + 1` frames at `every=1`).
 
 ```python no-run
@@ -72,10 +85,13 @@ traj, clip = record_rollout(env, 150, env_index=0, camera="rs_sideview")
 clip                          # the last expression of a notebook cell plays inline
 clip.save("run.mp4")          # the format follows the suffix: .mp4 or .gif
 
-traj, tiled = record_rollout(env, 150, env_index=[0, 1, 2, 3], ncols=2)   # several envs of one batch in one clip, labelled "env i  step t"
+traj, clip = record_rollout(env, 150)                       # num_envs > 1: every env, in one shared scene on a grid
+traj, tiled = record_rollout(env, 150, env_index=[0, 1, 2, 3], layout="tile", ncols=2)   # separate renders tiled, labelled "env i  step t"
 ```
 
-- `env_index` is one index, a list, or `"all"`; several are tiled into a grid (`ncols`) and labelled (`label=False` to turn that off).
+- `env_index` defaults to `None`: every env of the batch (the single env when `num_envs == 1`). Pass one index, a list, or `"all"` to choose.
+- With several envs, `layout="scene"` (default) draws them in **one shared world on a grid**, the way Isaac Lab does: env 0 at the origin, `spacing` metres apart (default: the workspace width plus 40 percent), `ncols` columns.
+  The envs do not interact; each keeps its own state and is only drawn shifted. `layout="tile"` renders every env separately from the same camera and tiles the images, each labelled (`label=False` to turn that off).
 - `fps` defaults to `control_freq / every`, so a clip plays in real time.
 - `policy` is anything `env.rollout` takes; `reset_td` goes to `env.reset` (to inject a target, say). Other keyword arguments go to `env.rollout`.
 - `callback`, `auto_reset` and `tensordict` are set by the function and cannot be passed.

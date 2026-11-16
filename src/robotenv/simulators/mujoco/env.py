@@ -250,6 +250,27 @@ class MujocoEnv(SpacesMixin, EnvBase):
 
         return get_renderer(self).render(env_index, camera=camera, size=size, overlays=overlays)
 
+    def render_grid(
+        self,
+        env_indices=None,
+        *,
+        camera=None,
+        size: tuple[int, int] = (480, 640),
+        overlays: bool = True,
+        spacing: float | None = None,
+        ncols: int | None = None,
+    ) -> np.ndarray:
+        """Render several envs (default all) in ONE shared scene on a grid, as Isaac Lab does; ``uint8 (H, W, 3)``.
+
+        Each env keeps its own state and is drawn shifted by its grid offset (env 0 at the origin, ``spacing`` metres
+        apart, default from the workspace size). ``camera`` is a view name, a ``CameraSpec`` or an ``MjvCamera``.
+        """
+        from .render import get_renderer
+
+        return get_renderer(self).render_grid(
+            env_indices, camera=camera, size=size, overlays=overlays, spacing=spacing, ncols=ncols
+        )
+
     def close(self, *, raise_if_closed: bool = True):
         renderer, self._renderer = getattr(self, "_renderer", None), None
         if renderer is not None:
