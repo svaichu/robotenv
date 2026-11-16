@@ -1,7 +1,7 @@
 # robotenv: agent memory
 
 Start with `AGENTS.md` (what the package is), `docs/README.md` (reference index) and `docs/design.md` (principles, boundaries, vocabulary; the older dated decision log is in git history); `docs/tasks/writing-a-provider.md` shows how to add a task source. This file keeps what those do not: working rules, environment facts, pitfalls, open decisions.
-Last updated: 2026-10-30. Work happens on `devel` (merged locally; the user pushes). The older history of this file is in git.
+Last updated: 2026-11-16. Work happens on `devel` (merged locally; the user pushes). The older history of this file is in git.
 
 ## Goal
 A framework to load different robot configs into an RL env, reused in other projects to study relationships between embodiments in
@@ -136,3 +136,19 @@ tensordict < 0.15, tensordict 0.15.3 needs torch >= 2.11: widen the pins only af
 - `Lift`: the frame is `(-0.56, 0, 0.912)`, identity orientation, as the stock Panda's root; the pedestal is not recreated.
 - #44 (branch issue-44-mount-simulator, on top of #43): `TaskImpl.mount_site()`; `simulators/mujoco/mount.py` reads the marker (scene-only compile + `mj_forward`), checks it against `mount_frame` (1e-6), `base = marker @ mount`; both compile paths (ParametricArm and ExternalRobot) use it; `env.world_mount`. Test providers `framed` / `framed_bad` in `tests/toy_provider/framed*.py` (conftest registers them).
 - #45 (branch issue-45-mount-robosuite, on top of #44): `SceneAssets.mount` is the stock Panda's root `Pose`; marker site `rs_mount`; `RobosuiteTasks.mount_frame(params)` memoised in `_FRAMES` by (name, canonical env_kwargs), seed-free. `Lift` frame `(-0.56, 0, 0.912)`, identity. The pedestal (RethinkMount) is not recreated: the base floats in renders.
+
+## ManiSkill as a robot provider (roadmap #65, issues #66 to #71; done 2026-11-16)
+- User decision: ManiSkill is a **robot provider only for now** (`robot/providers/maniskill`); simulators stay MuJoCo and MuJoCo Warp. Merging into `devel` is allowed, never into `main` without the user's word.
+- Versions used: mani_skill 3.0.1, sapien 3.0.3, mujoco 3.17.0. The extra has the marker `python_full_version < '3.13'`: ManiSkill pins `mplib==0.1.1` (wheels for cp310 to cp312 only, no sdist). **The user's own venv is Python 3.13, so the extra cannot be installed there**; a 3.12 venv is needed for the `maniskill` tests.
+- Facts found:
+  - Importing `mani_skill` / `sapien` works headless. SAPIEN's URDF loader creates a `RenderMaterial` while parsing visuals and needs a Vulkan device; a URDF stripped of `<visual>` and `<collision>` loads in a bare `PhysxCpuSystem` scene, which is how the joint order is read. SAPIEN orders active joints breadth first, MuJoCo depth first: keyframes are mapped by joint name.
+  - Agent facts are class attributes; some agents set joint names in `__init__` or read `self.robot.active_joints` in `_controller_configs`. `_bare_agent` runs the constructor with `BaseAgent.__init__` replaced by a no-op and gives a stand-in `robot`.
+  - There is no agent `xarm7` (only `xarm7_ability`); the second test arm is `panda_stick`.
+  - ManiSkill switches gravity off on a fixed robot's links (`balance_passive_force`, default true): MuJoCo `gravcomp = 1` on every body. Without it kp 1000 / limit 100 cannot hold a Panda.
+  - ManiSkill's damping needs an implicit integrator (`implicitfast`); under `euler` or `rk4` the servos chatter. The spec states it in its option and the compile warns (general, in `external.problems_of`).
+  - A force limit on the actuator (`forcerange`) makes MuJoCo's implicit integrators drop the actuator's damping term when it clamps: so100, koch and the Allegro hand diverged. The limit is on the joint (`actfrcrange`) instead; Warp takes it and parity improved.
+  - MuJoCo collides a body with its child when the parent is welded to the world (a fixed base link); SAPIEN never collides jointed links: every jointed pair is a contact exclude.
+  - MuJoCo's URDF import: `fusestatic` must be off (the end-effector link is a fixed link); an `MjSpec` edited after `compile()` must be compiled again before `attach` (a keyframe is sized against the last compile).
+  - Building a ManiSkill *task* scene fails without a Vulkan driver even with `render_backend="none"` (`build_cube` creates a `RenderMaterial`): the main obstacle for a later task provider.
+- Not verified: the 19 agents whose assets must be downloaded (the download is refused by the network of the dev container), CUDA, Warp for robots other than `panda` and `panda_stick`, Python 3.10 beyond install and import.
+- Open decisions: a ManiSkill task provider (scene conversion from live SAPIEN actors, placement by ManiSkill's own reset code, our objectives); the Inspire hands (unstable: mimic constraints on links with inertia 2e-9); visual meshes; an example notebook (offered, not asked for).
