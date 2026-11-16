@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from .._canon import as_float, as_int, as_vector, check_keys, within
+from .._pretty import kv
 from ..errors import ConfigError
 from .mount import MobileMount, Mount, check_mount, mount_from_dict
 from .providers import get_task_provider, known_task_ids, list_task_providers
@@ -127,6 +128,18 @@ class TaskConfig:
     def id(self) -> str:
         """``"<provider>/<name>"``, for messages and logs; derived from ``params``, never stored."""
         return f"{self.params.provider}/{self.params.name}"
+
+    def __repr__(self) -> str:
+        try:  # the params row says what the header does not: it is left out when ``name`` is the only field
+            extra = {k for k in self.params.to_dict() if k != "name"}
+        except Exception:
+            extra = {"?"}
+        rows = [
+            ("params", self.params if extra else None), ("max_episode_steps", self.max_episode_steps),
+            ("success_tolerance", self.success_tolerance), ("target_region", self.target_region),
+            ("mount", self.mount),
+        ]
+        return "\n".join([f"TaskConfig  {self.id}", *kv(rows)])
 
     def to_dict(self) -> dict[str, Any]:
         return {

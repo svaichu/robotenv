@@ -147,14 +147,15 @@ A `Family` is a list of `BaseEnvConfig` (`len`, iteration, indexing) with `confi
 override values and `env_hash`). Items whose resolved `env_hash` repeats are dropped, and `Family.notes` says which. An invalid item raises at expansion and names its index and
 overrides. A sweep only **expands**: it launches nothing. Running a family on many processes or nodes is [cluster](../cluster.md).
 
-## Inspecting: `explain`, `diff`
+## Inspecting: `print`, `explain`, `diff`
 
-`explain()` returns a table of every field with its value and where it came from (`set` or `default`). `diff()` returns
-`{path: (default, value)}` against a pristine `BaseEnvConfig()`.
+`print(cfg)` (the `repr`) groups the fields by part (a ready robot as its per-joint table) and tags each value `[set]` or `[default]`; fields that are `None` are left out, and in a notebook the same text is shown in a fixed-width block.
+`explain()` is the flat table of every field with its value and source (plus, for an external robot, its licence row). `diff()` returns `{path: (default, value)}` against a pristine `BaseEnvConfig()`.
 
 ```python
 assert set(cfg.diff()) >= {"robot.n", "robot.axes", "robot.total_length", "sim.num_envs", "sim.seed"}
 assert "robot.n" in cfg.explain() and "[set]" in cfg.explain()
+assert repr(cfg).startswith("BaseEnvConfig (defaults version")
 ```
 
 ## Files and reproducibility
