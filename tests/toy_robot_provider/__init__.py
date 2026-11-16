@@ -13,8 +13,8 @@ from typing import Any
 
 import numpy as np
 
-from robotdesigner.errors import ConfigError, Problem
-from robotdesigner.robot import EndEffectorRef, ExternalJoint, ExternalRobot, Pose
+from robotenv.errors import ConfigError, Problem
+from robotenv.robot import EndEffectorRef, ExternalJoint, ExternalRobot, Pose
 
 ARM3 = """
 <mujoco model="arm3">
@@ -206,7 +206,7 @@ class ToyRobots:
         return []
 
     def kinematics(self, robot: ExternalRobot) -> Any:
-        from robotdesigner.simulators.mujoco.external import MujocoKinematics
+        from robotenv.simulators.mujoco.external import MujocoKinematics
 
         return MujocoKinematics(robot, self.spec(robot))
 

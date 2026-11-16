@@ -17,7 +17,7 @@ needs_gl = pytest.mark.skipif(not _has_gl(), reason="no OpenGL context (try MUJO
 
 
 def _env(num_envs=2, **kw):
-    from robotdesigner.envs import make_env
+    from robotenv.envs import make_env
     from tests.test_mujoco_env import make_cfg
 
     return make_env(make_cfg(num_envs=num_envs, **kw))
@@ -26,7 +26,7 @@ def _env(num_envs=2, **kw):
 @pytest.mark.render
 @needs_gl
 def test_render_rgb_shape_and_dtype():
-    from robotdesigner.simulators.mujoco.render import render_rgb
+    from robotenv.simulators.mujoco.render import render_rgb
 
     env = _env(2)
     env.reset()
@@ -35,7 +35,7 @@ def test_render_rgb_shape_and_dtype():
 
 
 def test_render_rejects_bad_env_index():
-    from robotdesigner.simulators.mujoco.render import render_rgb
+    from robotenv.simulators.mujoco.render import render_rgb
 
     env = _env(2)
     with pytest.raises(IndexError):
@@ -133,7 +133,7 @@ def test_target_marker_turns_green_once_reached():
 @pytest.mark.render
 @needs_gl
 def test_named_views_and_custom_cameras():
-    from robotdesigner.viz import VIEWS, auto_camera
+    from robotenv.viz import VIEWS, auto_camera
 
     env = _env(1)
     env.reset()
@@ -172,7 +172,7 @@ def test_close_releases_the_renderer():
 @needs_gl
 def test_record_rollout_end_to_end(tmp_path):
     pytest.importorskip("PIL")  # labels are drawn when several envs are tiled
-    from robotdesigner.viz import record_rollout
+    from robotenv.viz import record_rollout
 
     env = _env(2)
     traj, clip = record_rollout(env, 6, env_index="all", size=(48, 64))
@@ -184,7 +184,7 @@ def test_record_rollout_end_to_end(tmp_path):
 @pytest.mark.render
 @needs_gl
 def test_record_rollout_stops_with_the_rollout():
-    from robotdesigner.viz import record_rollout
+    from robotenv.viz import record_rollout
 
     env = _env(1, max_episode_steps=3)  # truncates after 3 steps
     traj, clip = record_rollout(env, 10, size=(32, 48))

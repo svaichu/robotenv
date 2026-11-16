@@ -1,6 +1,6 @@
 # pizza_robot: agent memory
 
-Standalone MuJoCo scene: an ElRobot arm on a table making a pizza. It is not wired into the `robotdesigner` package (no MjSpec composer, no gymnasium env).
+Standalone MuJoCo scene: an ElRobot arm on a table making a pizza. It is not wired into the `robotenv` package (no MjSpec composer, no gymnasium env).
 
 ## Files
 - `elrobot_table.xml`: the whole scene. Meshes load from `assets/elrobot/`, so the XML must stay next to `assets/`.

@@ -7,11 +7,11 @@ torch = pytest.importorskip("torch")
 mujoco = pytest.importorskip("mujoco")
 pytest.importorskip("mujoco_warp")
 
-from robotdesigner.config import Pose, WarpOptions, chain  # noqa: E402
-from robotdesigner.config import kinematics as kin  # noqa: E402
-from robotdesigner.simulators.mujoco.compile import compile_robot  # noqa: E402
-from robotdesigner.simulators.warp.sim import CapacityError, WarpBatchedSim, check_model_supported  # noqa: E402
-from robotdesigner.tasks.base import SimView  # noqa: E402
+from robotenv.config import Pose, WarpOptions, chain  # noqa: E402
+from robotenv.config import kinematics as kin  # noqa: E402
+from robotenv.simulators.mujoco.compile import compile_robot  # noqa: E402
+from robotenv.simulators.warp.sim import CapacityError, WarpBatchedSim, check_model_supported  # noqa: E402
+from robotenv.tasks.base import SimView  # noqa: E402
 from tests.test_mujoco_compile import COMMON, MOUNT, make_cfg  # noqa: E402
 
 DEVICES = ["cpu", pytest.param("cuda:0", marks=[pytest.mark.gpu, pytest.mark.skipif(

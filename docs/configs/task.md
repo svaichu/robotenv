@@ -4,11 +4,11 @@ A task says what the world adds to the robot: scene objects, resets, observation
 never by the core package. `TaskConfig` never mentions the number of joints or link lengths, so the same task object can be given to any embodiment.
 
 ```python
-from robotdesigner.config import (
+from robotenv.config import (
     BaseEnvConfig, ConfigError, FixedBox, MobileMount, Mount, OwnReachable, Pose, TaskConfig, get_task_provider, list_task_providers,
     snapped, world_mount,
 )
-from robotdesigner.tasks.empty import EmptyParams
+from robotenv.tasks.empty import EmptyParams
 ```
 
 ## Fields
@@ -86,8 +86,8 @@ A provider owns a namespace (`[a-z][a-z0-9_]*`) and offers `task_names()`, `para
 `build(cfg, simulator)` (the `TaskProvider` protocol). Providers are found lazily, from three sources:
 
 1. `register_task_provider(namespace, provider, replace=False)`: explicit, also what tests use; it wins over the two discovered sources;
-2. the subpackages of `robotdesigner.tasks`: the package name is the namespace and the package exposes `PROVIDER`;
-3. the entry-point group `robotdesigner.task_providers` (entry-point name = namespace, value `"module:attr"`): how another project brings its own tasks.
+2. the subpackages of `robotenv.tasks`: the package name is the namespace and the package exposes `PROVIDER`;
+3. the entry-point group `robotenv.task_providers` (entry-point name = namespace, value `"module:attr"`): how another project brings its own tasks.
    If an entry point reuses the namespace of a subpackage, the subpackage is the one that loads.
 
 ```python

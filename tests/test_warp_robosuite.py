@@ -14,8 +14,8 @@ pytestmark = pytest.mark.robosuite
 
 from torchrl.envs.utils import check_env_specs  # noqa: E402
 
-from robotdesigner.config import ConfigError  # noqa: E402
-from robotdesigner.envs import make_env  # noqa: E402
+from robotenv.config import ConfigError  # noqa: E402
+from robotenv.envs import make_env  # noqa: E402
 from tests.parity import build, on_warp, twin, with_sim  # noqa: E402
 from tests.test_robosuite_task import make_cfg  # noqa: E402
 from tests.test_warp_env import DEVICES  # noqa: E402
@@ -96,8 +96,8 @@ def test_scene_problems_are_reported_together():
 
 @pytest.mark.parametrize("device", DEVICES)
 def test_a_too_small_contact_capacity_raises_capacity_error(device):
-    from robotdesigner.config import WarpOptions
-    from robotdesigner.simulators.warp.sim import CapacityError
+    from robotenv.config import WarpOptions
+    from robotenv.simulators.warp.sim import CapacityError
 
     cfg = on_warp(make_cfg(num_envs=2), device)
     cfg = replace(cfg, sim=replace(cfg.sim, options=WarpOptions(njmax=64, nconmax=1, cuda_graph=False)))

@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from robotdesigner.config import ConfigError, Pose, chain
-from robotdesigner.config import kinematics as kin
+from robotenv.config import ConfigError, Pose, chain
+from robotenv.config import kinematics as kin
 
 COMMON = dict(radius=0.03, damping=0.5, armature=0.01, frictionloss=0.0, effort_limit=50.0)
 PI = np.pi

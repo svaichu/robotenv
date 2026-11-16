@@ -15,7 +15,7 @@ provider validates as soon as the namespace is registered, without loading the p
 ```python
 from types import SimpleNamespace
 
-from robotdesigner.config import (
+from robotenv.config import (
     ConfigError, EndEffectorRef, ExternalJoint, ExternalRobot, Pose, get_robot_provider, list_robot_providers,
     register_robot_provider, unregister_robot_provider,
 )
@@ -55,11 +55,11 @@ Five methods; no engine import at module level (the test `tests/test_packaging.p
 | `describe(name, **options)` | open the model, read the numbers, return an `ExternalRobot` | engine |
 | `spec(robot)` | an editable `mujoco.MjSpec` of the model, **after checking `robot.source`**; a mismatch is a `ConfigError` at `robot.source` ("the model changed since this config was written"), never a silent load | engine |
 | `validate(robot, simulator)` | every reason this robot cannot run on that simulator, as `Problem(path, message)`; `make_env` collects them with the simulator's own | may import |
-| `kinematics(robot)` | an oracle with `forward_ee_batch(q, base)` and `sample_joint_positions(num, rng)`; for a MuJoCo-based provider, `robotdesigner.simulators.mujoco.external.MujocoKinematics(robot, self.spec(robot))` is one | engine |
+| `kinematics(robot)` | an oracle with `forward_ee_batch(q, base)` and `sample_joint_positions(num, rng)`; for a MuJoCo-based provider, `robotenv.simulators.mujoco.external.MujocoKinematics(robot, self.spec(robot))` is one | engine |
 
 ```python no-run
-from robotdesigner.errors import ConfigError, Problem
-from robotdesigner.robot import EndEffectorRef, ExternalJoint, ExternalRobot, Pose
+from robotenv.errors import ConfigError, Problem
+from robotenv.robot import EndEffectorRef, ExternalJoint, ExternalRobot, Pose
 
 
 class MyRobots:
@@ -83,7 +83,7 @@ class MyRobots:
         return [] if simulator in ("mujoco", "warp") else [Problem("sim.simulator", "...")]
 
     def kinematics(self, robot):
-        from robotdesigner.simulators.mujoco.external import MujocoKinematics
+        from robotenv.simulators.mujoco.external import MujocoKinematics
 
         return MujocoKinematics(robot, self.spec(robot))
 
@@ -97,12 +97,12 @@ a model whose driven joints have no actuator, or two, is reported as a problem b
 
 ## 3. Register it
 
-Three ways, in order of precedence: `register_robot_provider(namespace, target)` (an object, a class, or a lazy `"module:attr"` string); the entry-point group `robotdesigner.robot.providers` of your package; or a subpackage of
-`robotdesigner.robot.providers` for a provider that ships with this package.
+Three ways, in order of precedence: `register_robot_provider(namespace, target)` (an object, a class, or a lazy `"module:attr"` string); the entry-point group `robotenv.robot.providers` of your package; or a subpackage of
+`robotenv.robot.providers` for a provider that ships with this package.
 
 ```toml
 # pyproject.toml of your package
-[project.entry-points."robotdesigner.robot.providers"]
+[project.entry-points."robotenv.robot.providers"]
 mine = "my_package.robots:PROVIDER"
 ```
 

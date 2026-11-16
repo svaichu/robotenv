@@ -12,7 +12,7 @@ pytest.importorskip("torchrl")
 
 from torchrl.envs.utils import check_env_specs
 
-from robotdesigner.config import (
+from robotenv.config import (
     BaseEnvConfig,
     ConfigError,
     ControlConfig,
@@ -29,11 +29,11 @@ from robotdesigner.config import (
     SimConfig,
     TaskConfig,
 )
-from robotdesigner.config import kinematics as kin
-from robotdesigner.envs import make_env
-from robotdesigner.simulators.mujoco.compile import compile_robot
-from robotdesigner.simulators.mujoco.external import compose
-from robotdesigner.viz.camera import workspace_points
+from robotenv.config import kinematics as kin
+from robotenv.envs import make_env
+from robotenv.simulators.mujoco.compile import compile_robot
+from robotenv.simulators.mujoco.external import compose
+from robotenv.viz.camera import workspace_points
 from tests.toy_provider import ReachParams
 from tests.toy_robot_provider import PROVIDER
 
@@ -95,7 +95,7 @@ def world_ee(env):
 
 
 def test_world_ee_is_the_mount_times_the_base_frame_ee(arm3):
-    from robotdesigner.config.kinematics import pose_to_matrix
+    from robotenv.config.kinematics import pose_to_matrix
 
     base_ee = []
     for mount in (Pose.identity(), ROTATED, OTHER):
@@ -303,7 +303,7 @@ def test_a_large_dt_is_reported_and_the_scene_keeps_dt_and_integrator(arm3):
 
 
 def test_capabilities_list_the_external_kind():
-    from robotdesigner.simulators import get_simulator
+    from robotenv.simulators import get_simulator
 
     assert get_simulator("mujoco").capabilities().robot_kinds == frozenset({"parametric", "external"})
 
@@ -316,7 +316,7 @@ def test_parametric_compile_still_works_next_to_an_external_one(arm3):
 
 # --- our own actuators on an external robot (FixedGains, InertiaScaledGains) -------------------------------------------
 
-from robotdesigner.config import FixedGains, InertiaScaledGains
+from robotenv.config import FixedGains, InertiaScaledGains
 
 
 def own_cfg(robot, gains, mode="joint_pos_abs", scale=None, num_envs=2, mount=None):

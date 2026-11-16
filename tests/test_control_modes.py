@@ -7,14 +7,14 @@ pytest.importorskip("torchrl")
 
 from torchrl.envs.utils import check_env_specs  # noqa: E402
 
-from robotdesigner.simulators.mujoco.compile import compile_robot  # noqa: E402
-from robotdesigner.config import (  # noqa: E402
+from robotenv.simulators.mujoco.compile import compile_robot  # noqa: E402
+from robotenv.config import (  # noqa: E402
     ControlConfig, EnvConfig, FixedBox, InertiaScaledGains, MujocoOptions, SimConfig,
     Pose, TaskConfig, chain,
 )
 from tests.toy_provider import ReachParams
-from robotdesigner.config import MobileMount, Mount  # noqa: E402,F401
-from robotdesigner.envs import make_env  # noqa: E402
+from robotenv.config import MobileMount, Mount  # noqa: E402,F401
+from robotenv.envs import make_env  # noqa: E402
 
 COMMON = dict(radius=0.03, damping=0.5, armature=0.01, frictionloss=0.0, effort_limit=50.0)
 

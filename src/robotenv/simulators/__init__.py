@@ -47,5 +47,5 @@ def get_simulator(name: str) -> Simulator:
     return target
 
 
-register_simulator("mujoco", "robotdesigner.simulators.mujoco:MujocoSimulator")
-register_simulator("warp", "robotdesigner.simulators.warp:WarpSimulator")
+register_simulator("mujoco", "robotenv.simulators.mujoco:MujocoSimulator")
+register_simulator("warp", "robotenv.simulators.warp:WarpSimulator")

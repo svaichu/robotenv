@@ -3,19 +3,19 @@ import pickle
 
 import pytest
 
-from robotdesigner.config import (
+from robotenv.config import (
     NOT_SET, BaseEnvConfig, Chain, ConfigError, ControlConfig, EnvConfig, FixedBox, FixedGains, InertiaScaledGains,
     MujocoOptions, Mount, Pose, SimConfig, TaskConfig, chain, register_simulator_options,
 )
-from robotdesigner.config import defaults
-from robotdesigner.config.sim import SIMULATOR_OPTIONS
+from robotenv.config import defaults
+from robotenv.config.sim import SIMULATOR_OPTIONS
 from tests.toy_provider import ReachParams
 
 
 def hand_built():
     arm = chain(1, "z", total_length=0.5, total_mass=1.0, radius=0.03, damping=0.5, armature=0.01, frictionloss=0.0,
                 effort_limit=50.0, range=(-2.5, 2.5))
-    from robotdesigner.tasks.empty import EmptyParams
+    from robotenv.tasks.empty import EmptyParams
 
     return EnvConfig(
         robot=arm,
@@ -167,7 +167,7 @@ def test_the_mount_is_an_ordinary_value_snapped_by_default():
 
 def test_resolving_a_robosuite_config_builds_no_scene():
     """The mount frame is not read at resolve() time: it needs no robosuite."""
-    from robotdesigner.tasks.robosuite import LiftObject, RobosuiteParams
+    from robotenv.tasks.robosuite import LiftObject, RobosuiteParams
 
     cfg = BaseEnvConfig().task(RobosuiteParams("Lift", {}, LiftObject("cube", 0.84), 0.0, False)).sim(scene="empty").resolve()
     assert cfg.task.mount == Mount()
@@ -176,7 +176,7 @@ def test_resolving_a_robosuite_config_builds_no_scene():
 def test_goal_fields_are_reset_when_the_task_changes_class():
     goal = BaseEnvConfig().task(ReachParams("reach", 0.0, False), success_tolerance=0.02,
                                 target_region=FixedBox((0.1, -0.1, 0.0), (0.4, 0.1, 0.3)))
-    back = goal.task(__import__("robotdesigner.tasks.empty", fromlist=["EmptyParams"]).EmptyParams("idle"))
+    back = goal.task(__import__("robotenv.tasks.empty", fromlist=["EmptyParams"]).EmptyParams("idle"))
     assert back.resolve().task.target_region is None and back.resolve().task.success_tolerance is None
 
 
@@ -361,7 +361,7 @@ def test_yaml_round_trip_and_the_missing_extra(tmp_path, monkeypatch):
     try:
         import yaml  # noqa: F401
     except ImportError:
-        with pytest.raises(ImportError, match=r"robotdesigner\[yaml\]"):
+        with pytest.raises(ImportError, match=r"robotenv\[yaml\]"):
             cfg.dump(tmp_path / "run.yaml")
         return
     path = tmp_path / "run.yaml"
@@ -370,7 +370,7 @@ def test_yaml_round_trip_and_the_missing_extra(tmp_path, monkeypatch):
     import sys
 
     monkeypatch.setitem(sys.modules, "yaml", None)
-    with pytest.raises(ImportError, match=r"robotdesigner\[yaml\]"):
+    with pytest.raises(ImportError, match=r"robotenv\[yaml\]"):
         cfg.dump(tmp_path / "again.yml")
     with pytest.raises(ConfigError, match="^format"):
         cfg.dump(tmp_path / "x.json", format="toml")
@@ -381,7 +381,7 @@ def test_the_config_layer_imports_with_numpy_only():
     import sys
 
     code = ("import sys\nfor m in ['torch','torchrl','tensordict','mujoco','robosuite','yaml']: sys.modules[m] = None\n"
-            "from robotdesigner.config import BaseEnvConfig\n"
+            "from robotenv.config import BaseEnvConfig\n"
             "c = BaseEnvConfig().with_overrides(['sim.num_envs=2']); assert c.resolve().sim.num_envs == 2\n"
             "import json; BaseEnvConfig.from_dict(json.loads(json.dumps(c.to_dict())))\n")
     subprocess.run([sys.executable, "-c", code], check=True)

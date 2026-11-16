@@ -9,12 +9,12 @@ pytest.importorskip("torchrl")
 
 from torchrl.envs.utils import check_env_specs  # noqa: E402
 
-from robotdesigner.config import (  # noqa: E402
+from robotenv.config import (  # noqa: E402
     Mount,
     ControlConfig, EnvConfig, FixedBox, FixedGains, MujocoOptions, OwnReachable, SimConfig, TaskConfig, chain,
 )
 from tests.toy_provider import ReachParams
-from robotdesigner.envs import make_env  # noqa: E402
+from robotenv.envs import make_env  # noqa: E402
 
 COMMON = dict(radius=0.03, damping=0.5, armature=0.01, frictionloss=0.0, effort_limit=50.0)
 
@@ -151,7 +151,7 @@ def test_make_env_rejects_unsupported():
     cfg = make_cfg()
     bad = replace(cfg, control=ControlConfig("ee_pos_delta", FixedGains(1.0, 1.0), None),
                   sim=replace(cfg.sim, device="cuda:0"))
-    from robotdesigner.config import ConfigError
+    from robotenv.config import ConfigError
 
     with pytest.raises(ConfigError) as e:
         make_env(bad)

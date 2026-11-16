@@ -5,9 +5,9 @@ simulator's scene and nothing is asked of it. It is the task of `BaseEnvConfig()
 ([robosuite](robosuite.md), [writing a provider](writing-a-provider.md)); `tests/test_no_hardcoded_tasks.py` keeps the rest of the core free of task names.
 
 ```python
-from robotdesigner.config import BaseEnvConfig, TaskConfig, get_task_provider
-from robotdesigner.config import Mount, Pose
-from robotdesigner.tasks.empty import EmptyParams
+from robotenv.config import BaseEnvConfig, TaskConfig, get_task_provider
+from robotenv.config import Mount, Pose
+from robotenv.tasks.empty import EmptyParams
 
 task = TaskConfig(EmptyParams(name="idle"), max_episode_steps=100, success_tolerance=None, target_region=None, mount=Mount())
 assert task.id == "empty/idle"

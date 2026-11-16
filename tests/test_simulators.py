@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from robotdesigner.simulators import (
+from robotenv.simulators import (
     Capabilities,
     Problem,
     get_simulator,
@@ -12,8 +12,8 @@ from robotdesigner.simulators import (
     register_simulator,
 )
 
-from robotdesigner.config import ConfigError, Mount, Pose, TaskConfig, register_simulator_options, register_task_provider
-from robotdesigner.envs import make_env
+from robotenv.config import ConfigError, Mount, Pose, TaskConfig, register_simulator_options, register_task_provider
+from robotenv.envs import make_env
 from tests.test_env_config import make_cfg
 
 
@@ -94,14 +94,14 @@ def dummy_cfg(**sim):
 
 @pytest.fixture
 def dummy():
-    from robotdesigner.config import providers
+    from robotenv.config import providers
 
     register_simulator_options("dummy", DummyOptions)
     register_simulator("dummy", DummySimulator(extra=[Problem("sim.scene", "scene not available")]))
     register_task_provider("dummy", DummyTasks(), replace=True)
     yield
-    from robotdesigner.config.sim import SIMULATOR_OPTIONS
-    from robotdesigner.simulators import _REGISTRY
+    from robotenv.config.sim import SIMULATOR_OPTIONS
+    from robotenv.simulators import _REGISTRY
 
     _REGISTRY.pop("dummy", None)
     SIMULATOR_OPTIONS.pop("dummy", None)
@@ -166,7 +166,7 @@ def test_mujoco_simulator_rejects_unsupported_config():
 def test_lazy_import_keeps_engines_out():
     code = (
         "import sys\n"
-        "import robotdesigner.simulators, robotdesigner.envs\n"
+        "import robotenv.simulators, robotenv.envs\n"
         "bad = [m for m in ('mujoco', 'torch', 'torchrl') if m in sys.modules]\n"
         "assert not bad, bad\n"
     )

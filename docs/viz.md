@@ -1,6 +1,6 @@
-# Rendering and video: `robotdesigner.viz`
+# Rendering and video: `robotenv.viz`
 
-Every environment renders the **live state** of one of its worlds, so any loop can collect frames, and `robotdesigner.viz` turns frames into clips you can show in a notebook or save as MP4 or GIF.
+Every environment renders the **live state** of one of its worlds, so any loop can collect frames, and `robotenv.viz` turns frames into clips you can show in a notebook or save as MP4 or GIF.
 Rendering never changes the simulation. Both simulators render (a Warp environment renders from a host copy of the world).
 
 | need | for |
@@ -8,7 +8,7 @@ Rendering never changes the simulation. Both simulators render (a Warp environme
 | an OpenGL context | any `env.render` |
 | `pip install -e ".[env,viz]"` | saving: Pillow writes GIFs and annotates frames, `imageio-ffmpeg` writes MP4s |
 
-`import robotdesigner.viz` imports numpy only; Pillow, imageio and MuJoCo load when first needed.
+`import robotenv.viz` imports numpy only; Pillow, imageio and MuJoCo load when first needed.
 
 ## Headless machines
 
@@ -47,8 +47,8 @@ config you give it, so clips of different embodiments are drawn at the same scal
 ```python
 import numpy as np
 
-from robotdesigner.config import BaseEnvConfig, Chain
-from robotdesigner.viz import VIEWS, Clip, auto_camera, tile
+from robotenv.config import BaseEnvConfig, Chain
+from robotenv.viz import VIEWS, Clip, auto_camera, tile
 
 small = BaseEnvConfig().robot(Chain(n=2, axes="zy", total_length=0.5, total_mass=1.0)).resolve()
 large = BaseEnvConfig().robot(Chain(n=4, axes="zyyy", total_length=1.5, total_mass=4.0)).resolve()   # configs or bare arms both work
@@ -66,7 +66,7 @@ With the same seed the arms also get the same task draws ([seeding](simulators.m
 resets, runs `env.rollout`, renders after every `every`-th step and returns `(trajectory, clip)`. The clip holds the initial state, every `every`-th state and the final state (`steps + 1` frames at `every=1`).
 
 ```python no-run
-from robotdesigner.viz import record_rollout
+from robotenv.viz import record_rollout
 
 traj, clip = record_rollout(env, 150, env_index=0, camera="rs_sideview")
 clip                          # the last expression of a notebook cell plays inline

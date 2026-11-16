@@ -6,7 +6,7 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from robotdesigner.config import (
+from robotenv.config import (
     BaseEnvConfig,
     ConfigError,
     ExternalJoint,
@@ -17,15 +17,15 @@ from robotdesigner.config import (
     TaskConfig,
     world_mount,
 )
-from robotdesigner.config import (
+from robotenv.config import (
     kinematics as kin,
 )
-from robotdesigner.config.mount import compose, mount_from_dict
+from robotenv.config.mount import compose, mount_from_dict
 from tests.toy_provider.framed import FRAME, FramedParams
 
 
 def make_task(provider_params, mount):
-    from robotdesigner.config import OwnReachable
+    from robotenv.config import OwnReachable
 
     return TaskConfig(provider_params, 10, 0.02, OwnReachable(), mount)
 

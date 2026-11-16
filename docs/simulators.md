@@ -11,8 +11,8 @@ from a [provider](configs/task.md#where-tasks-come-from) and is written against 
 Both build the *same* compiled MuJoCo model of the robot and run the same control law, resets and seeding. The CPU simulator is the reference: parity tests compare the GPU one against it.
 
 ```python
-from robotdesigner.config import BaseEnvConfig
-from robotdesigner.simulators import check_capabilities, get_simulator, list_simulators
+from robotenv.config import BaseEnvConfig
+from robotenv.simulators import check_capabilities, get_simulator, list_simulators
 
 assert list_simulators() == ("mujoco", "warp")
 caps = get_simulator("warp").capabilities()                    # importing these checks needs neither torch nor MuJoCo
@@ -172,7 +172,7 @@ The robot provider's `MjSpec` is attached to the scene and driven by **its own a
 - **Frame limitation.** `SimView(frame="base")` is the static mount frame, **not** the moving trunk of a floating robot. A `"root"` frame does not exist yet.
 - **Problems, not silent changes.** `make_env` reports, with the config path: a model with no actuators; driven actuators of another kind than `robot.actuator_kind`; a stale `robot.source`
   (the provider's check: "the model changed since this config was written"); an unknown joint, entry or keyframe; a free root without `home_root`, or `home_root` without one.
-- **Kinematics.** `robotdesigner.simulators.mujoco.external.MujocoKinematics` is the host-side oracle that a MuJoCo-based robot provider returns from `RobotProvider.kinematics`
+- **Kinematics.** `robotenv.simulators.mujoco.external.MujocoKinematics` is the host-side oracle that a MuJoCo-based robot provider returns from `RobotProvider.kinematics`
   (`forward_ee_batch(q, base)` by `mj_kinematics`, `sample_joint_positions`), so `OwnReachable` targets and the camera framing of [viz](viz.md) work for external robots.
 ## GPU MuJoCo Warp specifics
 
@@ -239,6 +239,6 @@ family = cfg.sweep(paired={"sim.simulator": ["mujoco", "warp"], "sim.device": ["
 
 ## What a task sees: `SimView`
 
-Tasks never reach into a simulator. They get a `SimView` (`robotdesigner.tasks.base`): `num_envs`, `device`, `iface`, `model` (editable only in `bind`), `base_frame()`, `body_pose()`,
+Tasks never reach into a simulator. They get a `SimView` (`robotenv.tasks.base`): `num_envs`, `device`, `iface`, `model` (editable only in `bind`), `base_frame()`, `body_pose()`,
 `site_pos()`, `write_qpos()` and `host_data()`. Both `BatchedSim` (CPU) and `WarpBatchedSim` implement it, which is why a provider lists the simulators it was tested on and nothing more.
 How to write a task: [writing a provider](tasks/writing-a-provider.md).

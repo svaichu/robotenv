@@ -96,7 +96,7 @@ def _yaml():
     try:
         import yaml
     except ImportError as e:
-        raise ImportError("YAML configs need the optional extra: pip install 'robotdesigner[yaml]'") from e
+        raise ImportError("YAML configs need the optional extra: pip install 'robotenv[yaml]'") from e
     return yaml
 
 

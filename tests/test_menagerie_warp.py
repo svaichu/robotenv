@@ -15,9 +15,9 @@ pytest.importorskip("mujoco")
 pytest.importorskip("torchrl")
 pytest.importorskip("mujoco_warp")
 
-from robotdesigner.config import BaseEnvConfig, FixedGains, WarpOptions, snapped
-from robotdesigner.robot.providers.menagerie import PROVIDER
-from robotdesigner.simulators.warp.sim import CapacityError
+from robotenv.config import BaseEnvConfig, FixedGains, WarpOptions, snapped
+from robotenv.robot.providers.menagerie import PROVIDER
+from robotenv.simulators.warp.sim import CapacityError
 from tests.parity import build, errors, on_warp, run, twin, with_sim
 from tests.test_warp_env import DEVICES
 from tests.test_warp_parity import TOL

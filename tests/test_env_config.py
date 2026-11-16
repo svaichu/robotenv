@@ -2,7 +2,7 @@ import copy
 
 import pytest
 
-from robotdesigner.config import (
+from robotenv.config import (
     Mount,
     Pose,
     ConfigError,
@@ -124,7 +124,7 @@ def test_the_options_belong_to_the_simulator():
 def test_inertia_scaled_gains_round_trip_and_validation():
     from dataclasses import replace
 
-    from robotdesigner.config import InertiaScaledGains
+    from robotenv.config import InertiaScaledGains
 
     cfg = make_cfg()
     cfg2 = replace(cfg, control=ControlConfig("joint_pos_delta", InertiaScaledGains(20.0, 1.0), 0.05))

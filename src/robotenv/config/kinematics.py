@@ -84,7 +84,7 @@ def _oracle(robot: ExternalRobot):
             "robot",
             f"the kinematics of robot {robot.provider}/{robot.name} need the simulation engine "
             f"({e.name or type(e).__name__} is missing): install the extra of robot provider {robot.provider!r} "
-            "or robotdesigner[env]",
+            "or robotenv[env]",
         ) from e
 
 

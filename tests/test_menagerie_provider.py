@@ -16,9 +16,9 @@ mujoco = pytest.importorskip("mujoco")
 torch = pytest.importorskip("torch")
 pytest.importorskip("torchrl")
 
-from robotdesigner.config import BaseEnvConfig, ConfigError, Mount, Pose, snapped
-from robotdesigner.config import kinematics as kin
-from robotdesigner.robot.providers.menagerie import PROVIDER, cards
+from robotenv.config import BaseEnvConfig, ConfigError, Mount, Pose, snapped
+from robotenv.config import kinematics as kin
+from robotenv.robot.providers.menagerie import PROVIDER, cards
 
 pytestmark = pytest.mark.menagerie
 

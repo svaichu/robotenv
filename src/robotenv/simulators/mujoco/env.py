@@ -243,7 +243,7 @@ class MujocoEnv(SpacesMixin, EnvBase):
 
         Shows the whole scene plus the overlays the task draws (``TaskImpl.overlays``). ``camera`` is ``None`` (the
         ``"iso"`` view framed on the workspace), a view name (``iso``, ``front``, ``side``, ``top``), a
-        ``robotdesigner.viz.CameraSpec``, a ``mujoco.MjvCamera``, or the name / id of a camera in the model.
+        ``robotenv.viz.CameraSpec``, a ``mujoco.MjvCamera``, or the name / id of a camera in the model.
         Rendering never changes the simulation.
         """
         from .render import get_renderer

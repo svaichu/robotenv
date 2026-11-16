@@ -1,6 +1,6 @@
 """The core names no robot provider and no robot.
 
-Robot namespaces and robots belong to the providers (``robotdesigner/robot/providers/<namespace>``). The code every robot
+Robot namespaces and robots belong to the providers (``robotenv/robot/providers/<namespace>``). The code every robot
 goes through (configs, simulators, ``make_env``, viz) must not mention them. The names to look for are read from the
 registry and the provider cards, so this test holds no list of robots either.
 """
@@ -9,9 +9,9 @@ import json
 import pathlib
 import re
 
-from robotdesigner.config import list_robot_providers
+from robotenv.config import list_robot_providers
 
-SRC = pathlib.Path(__file__).resolve().parents[1] / "src" / "robotdesigner"
+SRC = pathlib.Path(__file__).resolve().parents[1] / "src" / "robotenv"
 PROVIDERS = SRC / "robot" / "providers"
 CORE = [
     *sorted((SRC / "config").rglob("*.py")),

@@ -1,6 +1,6 @@
 """Robot embodiments as validated, hashable data, instantiated in batched RL environments.
 
-``env = robotdesigner.make_env(env_config)`` is the single way to get an environment from an ``EnvConfig``.
+``env = robotenv.make_env(env_config)`` is the single way to get an environment from an ``EnvConfig``.
 """
 
 __version__ = "0.2.0"
@@ -9,7 +9,7 @@ __all__ = ["__version__", "make_env"]
 
 
 def __getattr__(name):
-    # Lazy, so that ``import robotdesigner`` (and ``robotdesigner.config``) import no engine.
+    # Lazy, so that ``import robotenv`` (and ``robotenv.config``) import no engine.
     if name == "make_env":
         from .envs import make_env
 

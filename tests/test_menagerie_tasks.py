@@ -18,11 +18,11 @@ pytest.importorskip("torchrl")
 
 from torchrl.envs.utils import check_env_specs
 
-from robotdesigner.config import BaseEnvConfig, ConfigError, MobileMount, Mount, Pose
-from robotdesigner.config.kinematics import pose_to_matrix
-from robotdesigner.envs import make_env
-from robotdesigner.robot.providers.menagerie import PROVIDER
-from robotdesigner.simulators.mujoco.external import compose
+from robotenv.config import BaseEnvConfig, ConfigError, MobileMount, Mount, Pose
+from robotenv.config.kinematics import pose_to_matrix
+from robotenv.envs import make_env
+from robotenv.robot.providers.menagerie import PROVIDER
+from robotenv.simulators.mujoco.external import compose
 
 pytestmark = pytest.mark.menagerie
 
@@ -65,7 +65,7 @@ def test_empty_idle_on_a_fixed_base_robot_in_the_empty_scene(name):
 
 
 def lift_cfg(robot, num_envs=2, seed=0):
-    from robotdesigner.tasks.robosuite import LiftObject, RobosuiteParams
+    from robotenv.tasks.robosuite import LiftObject, RobosuiteParams
 
     params = RobosuiteParams("Lift", {}, LiftObject("cube", 0.84), 0.0, False)
     mount = MobileMount() if robot.home_root is not None else Mount()
@@ -130,7 +130,7 @@ def standing(name, mount, **control):
 
 
 def test_a_fixed_arm_at_a_yawed_and_shifted_mount():
-    from robotdesigner.config import kinematics as kin
+    from robotenv.config import kinematics as kin
 
     robot = describe("universal_robots_ur5e")
     env = make_env(BaseEnvConfig().robot(robot).task(mount=Mount(YAW90)).sim(num_envs=1, scene="plain_floor").resolve())
@@ -217,7 +217,7 @@ def _script():
 
 
 def test_the_default_policy_keeps_the_scenes_options_and_the_legged_robots_stand():
-    from robotdesigner.simulators.mujoco import external
+    from robotenv.simulators.mujoco import external
 
     assert external.CARRY_MODEL_OPTIONS is False  # the decision of docs/simulators.md
     script = _script()

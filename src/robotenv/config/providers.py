@@ -7,10 +7,10 @@ attribute ``provider`` of the params class) and the name (its ``name`` field). T
 - checks a config against a simulator (``validate``), and
 - builds the engine side of a task for that simulator (``build``): scene assets, resets, observations, reward.
 
-robotdesigner's own code knows no namespace and no task. Providers are found lazily, from
+robotenv's own code knows no namespace and no task. Providers are found lazily, from
 
-1. the subpackages of ``robotdesigner.tasks``: the subpackage name is the namespace and it exposes ``PROVIDER``;
-2. the entry-point group ``robotdesigner.task_providers``: the entry-point name is the namespace, the value
+1. the subpackages of ``robotenv.tasks``: the subpackage name is the namespace and it exposes ``PROVIDER``;
+2. the entry-point group ``robotenv.task_providers``: the entry-point name is the namespace, the value
    ``"module:attr"`` (this is how another project adds tasks);
 3. :func:`register_task_provider`, which takes precedence over both.
 """
@@ -38,7 +38,7 @@ __all__ = [
     "unregister_task_provider",
 ]
 
-ENTRY_POINT_GROUP = "robotdesigner.task_providers"
+ENTRY_POINT_GROUP = "robotenv.task_providers"
 _NAMESPACE = re.compile(r"[a-z][a-z0-9_]*")
 
 
@@ -96,10 +96,10 @@ def _discover() -> None:
     if _STATE["discovered"]:
         return
     _STATE["discovered"] = True
-    tasks = importlib.import_module("robotdesigner.tasks")
+    tasks = importlib.import_module("robotenv.tasks")
     for info in pkgutil.iter_modules(tasks.__path__):
         if info.ispkg and _NAMESPACE.fullmatch(info.name):
-            _REGISTRY.setdefault(info.name, f"robotdesigner.tasks.{info.name}:PROVIDER")
+            _REGISTRY.setdefault(info.name, f"robotenv.tasks.{info.name}:PROVIDER")
     for ep in importlib.metadata.entry_points(group=ENTRY_POINT_GROUP):
         if _NAMESPACE.fullmatch(ep.name):
             _REGISTRY.setdefault(ep.name, ep.value)

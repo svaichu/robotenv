@@ -1,7 +1,7 @@
 # Robot provider: `menagerie`
 
 The robot provider `menagerie` turns a model of [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie) into an [`ExternalRobot`](../configs/robot.md#externalrobot-a-model-that-lives-elsewhere),
-through the `mujoco-menagerie` library. Install it with `pip install 'robotdesigner[menagerie]'` (Python 3.10.12 or later).
+through the `mujoco-menagerie` library. Install it with `pip install 'robotenv[menagerie]'` (Python 3.10.12 or later).
 
 **No model is copied into this repository.** The library resolves a model on first use and caches it outside the repository tree (`MENAGERIE_CACHE_DIR` sets the cache directory;
 `MENAGERIE_ROOT` uses a checkout instead). Licences differ per model, so each robot's licence is in the table below and `BaseEnvConfig.explain()` shows it as `robot.license`.
@@ -9,8 +9,8 @@ through the `mujoco-menagerie` library. Install it with `pip install 'robotdesig
 The config side needs neither the library nor an engine, so a config naming this provider can be written, hashed and stored anywhere:
 
 ```python
-from robotdesigner.config import EndEffectorRef, ExternalJoint, ExternalRobot, Pose, list_robot_providers
-from robotdesigner.robot.providers.menagerie import cards
+from robotenv.config import EndEffectorRef, ExternalJoint, ExternalRobot, Pose, list_robot_providers
+from robotenv.robot.providers.menagerie import cards
 
 assert "menagerie" in list_robot_providers()
 ur5e_like = ExternalRobot(
@@ -26,8 +26,8 @@ assert "universal_robots_ur5e" in cards() and cards()["franka_emika_panda"]["end
 With the library installed, `describe` opens the model and fills these numbers in:
 
 ```python no-run
-from robotdesigner.config import BaseEnvConfig
-from robotdesigner.robot.providers.menagerie import PROVIDER
+from robotenv.config import BaseEnvConfig
+from robotenv.robot.providers.menagerie import PROVIDER
 
 panda = PROVIDER.describe("franka_emika_panda")        # position servos on the arm joints, an end effector on the hand body
 env = BaseEnvConfig().robot(panda).sim(num_envs=4, scene="plain_floor").build()
@@ -71,7 +71,7 @@ The task's `mount` (relative to the scene's mount frame; the world pose is `worl
 driven. `SimView`'s `"base"` frame is the static mount, **not** the moving trunk of a floating robot.
 
 ```python no-run
-from robotdesigner.config import BaseEnvConfig, MobileMount
+from robotenv.config import BaseEnvConfig, MobileMount
 
 go1 = PROVIDER.describe("unitree_go1")
 mount = MobileMount(spawn=(0.4, -0.3, 0.3), heading=1.5708)           # 0.3 m above its home height, turned 90 degrees about z

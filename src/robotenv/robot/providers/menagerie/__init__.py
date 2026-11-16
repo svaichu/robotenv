@@ -5,7 +5,7 @@ called. No model file is copied into this repository: the library resolves and c
 is ``MENAGERIE_CACHE_DIR``, or ``MENAGERIE_ROOT`` points at a checkout) and the licences differ per model, so
 :meth:`MenagerieRobots.license` reports the registry's licence of each.
 
-``describe`` reads a model and returns an :class:`~robotdesigner.robot.ExternalRobot`; ``cards.json`` holds, per robot,
+``describe`` reads a model and returns an :class:`~robotenv.robot.ExternalRobot`; ``cards.json`` holds, per robot,
 what cannot be derived (driven joints where a finger is a joint actuator, an end effector where the model has no
 suitable site, a keyframe that is not called ``home``).
 """
@@ -21,7 +21,7 @@ from ....errors import ConfigError, Problem
 __all__ = ["PROVIDER", "MenagerieRobots", "cards"]
 
 DEFAULT = object()  # "use the model's keyframe called home, if it has one"
-EXTRA = "pip install 'robotdesigner[menagerie]'"
+EXTRA = "pip install 'robotenv[menagerie]'"
 
 
 def cards() -> dict[str, dict[str, Any]]:

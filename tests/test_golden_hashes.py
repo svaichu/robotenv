@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 import tests.conftest  # noqa: F401  (registers the toy task provider; also when run as a script)
-from robotdesigner.config import (
+from robotenv.config import (
     BaseEnvConfig,
     ControlConfig,
     EnvConfig,

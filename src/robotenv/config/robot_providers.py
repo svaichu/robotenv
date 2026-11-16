@@ -1,6 +1,6 @@
 """Robot providers: who owns which robot namespace. Imports no simulation engine and no torch.
 
-An :class:`~robotdesigner.robot.ExternalRobot` refers to a model that lives elsewhere. Its ``provider`` field is a
+An :class:`~robotenv.robot.ExternalRobot` refers to a model that lives elsewhere. Its ``provider`` field is a
 namespace, and the namespace selects a *provider*, which
 
 - lists its robots (``names``),
@@ -11,8 +11,8 @@ namespace, and the namespace selects a *provider*, which
 
 This mirrors task providers (``config/providers.py``). The core knows no namespace. Providers are found lazily, from
 
-1. the subpackages of ``robotdesigner.robot.providers``: the subpackage name is the namespace and it exposes ``PROVIDER``;
-2. the entry-point group ``robotdesigner.robot.providers``: the entry-point name is the namespace, the value ``"module:attr"``;
+1. the subpackages of ``robotenv.robot.providers``: the subpackage name is the namespace and it exposes ``PROVIDER``;
+2. the entry-point group ``robotenv.robot.providers``: the entry-point name is the namespace, the value ``"module:attr"``;
 3. :func:`register_robot_provider`, which takes precedence over both.
 
 Answering ``list_robot_providers`` loads nothing; a provider module is imported when the provider is first used.
@@ -37,7 +37,7 @@ __all__ = [
     "unregister_robot_provider",
 ]
 
-ENTRY_POINT_GROUP = "robotdesigner.robot.providers"
+ENTRY_POINT_GROUP = "robotenv.robot.providers"
 _NAMESPACE = re.compile(r"[a-z][a-z0-9_]*")
 
 
@@ -94,10 +94,10 @@ def _discover() -> None:
     if _STATE["discovered"]:
         return
     _STATE["discovered"] = True
-    package = importlib.import_module("robotdesigner.robot.providers")
+    package = importlib.import_module("robotenv.robot.providers")
     for info in pkgutil.iter_modules(package.__path__):
         if info.ispkg and _NAMESPACE.fullmatch(info.name):
-            _REGISTRY.setdefault(info.name, f"robotdesigner.robot.providers.{info.name}:PROVIDER")
+            _REGISTRY.setdefault(info.name, f"robotenv.robot.providers.{info.name}:PROVIDER")
     for ep in importlib.metadata.entry_points(group=ENTRY_POINT_GROUP):
         if _NAMESPACE.fullmatch(ep.name):
             _REGISTRY.setdefault(ep.name, ep.value)

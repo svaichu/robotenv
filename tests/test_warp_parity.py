@@ -25,11 +25,11 @@ pytest.importorskip("mujoco")
 pytest.importorskip("torchrl")
 pytest.importorskip("mujoco_warp")
 
-from robotdesigner.config import BaseEnvConfig, Chain, InertiaScaledGains, Pose, chain  # noqa: E402
-from robotdesigner.simulators import get_simulator  # noqa: E402
+from robotenv.config import BaseEnvConfig, Chain, InertiaScaledGains, Pose, chain  # noqa: E402
+from robotenv.simulators import get_simulator  # noqa: E402
 from tests.parity import errors, on_warp, random_case, run, twin, with_control, with_sim  # noqa: E402
 from tests.test_mujoco_env import make_cfg  # noqa: E402
-from robotdesigner.config import MobileMount, Mount  # noqa: E402,F401
+from robotenv.config import MobileMount, Mount  # noqa: E402,F401
 from tests.test_warp_env import DEVICES  # noqa: E402
 
 TOL = {"qpos": 1e-4, "qvel": 1e-3, "effort": 1e-2, "ee_pos": 1e-4, "reward": 1e-4, "target_pos": 0.0}

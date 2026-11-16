@@ -4,10 +4,10 @@
 filled in behind your back: every field of every part is required. Its hash, `env_hash`, identifies a run.
 
 ```python
-from robotdesigner.config import (
+from robotenv.config import (
     ConfigError, ControlConfig, EnvConfig, FixedGains, MujocoOptions, Mount, Pose, SimConfig, TaskConfig, chain,
 )
-from robotdesigner.tasks.empty import EmptyParams
+from robotenv.tasks.empty import EmptyParams
 
 arm = chain(n=3, axes="zyy", total_length=0.9, total_mass=3.0, radius=0.03, damping=0.5, armature=0.01,
             frictionloss=0.0, effort_limit=50.0, range=(-2.5, 2.5))
@@ -70,7 +70,7 @@ def error_of(build):
     raise AssertionError("no error")
 
 wrong_gains = ControlConfig("joint_pos_abs", FixedGains(kp=(60.0, 40.0), kd=6.0), action_scale=None)
-from robotdesigner.config import NativeGains
+from robotenv.config import NativeGains
 native = ControlConfig("joint_pos_abs", NativeGains(), action_scale=None)
 assert error_of(lambda: dataclasses.replace(cfg, control=native)).path == "control.gains"   # a parametric arm has no actuators of its own
 assert error_of(lambda: dataclasses.replace(cfg, control=wrong_gains)).path == "control.gains.kp"

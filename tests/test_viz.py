@@ -6,13 +6,13 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-import robotdesigner.viz.clip as clipmod
-from robotdesigner.config import (
+import robotenv.viz.clip as clipmod
+from robotenv.config import (
     ControlConfig, EnvConfig, FixedBox, FixedGains, MujocoOptions, Pose, SimConfig, TaskConfig, chain,
 )
 from tests.toy_provider import ReachParams
-from robotdesigner.config import MobileMount, Mount  # noqa: E402,F401
-from robotdesigner.viz import (
+from robotenv.config import MobileMount, Mount  # noqa: E402,F401
+from robotenv.viz import (
     CameraSpec, Clip, FrameRecorder, annotate, auto_camera, record_rollout, tile, tile_clips, workspace_points,
 )
 

@@ -39,7 +39,7 @@ class WarpSimulator:
         mujoco_version, warp_version = _installed("mujoco"), _installed("mujoco-warp")
         if warp_version is None:
             problems.append(
-                Problem("sim.simulator", "mujoco_warp is not installed; install the extra: pip install 'robotdesigner[warp]'")
+                Problem("sim.simulator", "mujoco_warp is not installed; install the extra: pip install 'robotenv[warp]'")
             )
         elif mujoco_version is not None and warp_version != mujoco_version:
             problems.append(

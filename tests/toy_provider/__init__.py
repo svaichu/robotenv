@@ -1,6 +1,6 @@
 """A task provider for the tests only: namespace ``toy``, one goal task (``toy/reach``).
 
-robotdesigner ships no task of its own; its providers are the packages under ``robotdesigner.tasks`` (robosuite) and
+robotenv ships no task of its own; its providers are the packages under ``robotenv.tasks`` (robosuite) and
 whatever a project registers. The engine tests (batched env, control modes, resets, rendering overlays, goal regions) need
 a task that has no third-party assets and whose state is easy to predict, so this package is one. ``tests/conftest.py``
 registers it, lazily, under the namespace ``toy``. It also shows what a provider looks like: ``params.py`` is the config
@@ -12,8 +12,8 @@ from __future__ import annotations
 import importlib
 from typing import Any
 
-from robotdesigner.errors import Problem
-from robotdesigner.robot import Pose
+from robotenv.errors import Problem
+from robotenv.robot import Pose
 
 from .params import ReachParams
 

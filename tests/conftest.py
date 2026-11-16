@@ -1,7 +1,7 @@
 """Registers the test-only task provider (``tests/toy_provider``) under the namespace ``toy``, lazily: nothing is imported
 until a test builds or parses a ``toy/...`` task."""
 
-from robotdesigner.config import register_robot_provider, register_task_provider
+from robotenv.config import register_robot_provider, register_task_provider
 
 register_task_provider("toy", "tests.toy_provider:PROVIDER", replace=True)
 register_task_provider("framed", "tests.toy_provider.framed:PROVIDER", replace=True)

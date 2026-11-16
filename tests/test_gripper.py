@@ -4,8 +4,8 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from robotdesigner.config import BaseEnvConfig, ConfigError, ParametricArm, ToolSpec, TwoFingerGripper, chain
-from robotdesigner.config.sim import SimConfig  # noqa: F401
+from robotenv.config import BaseEnvConfig, ConfigError, ParametricArm, ToolSpec, TwoFingerGripper, chain
+from robotenv.config.sim import SimConfig  # noqa: F401
 
 COMMON = dict(radius=0.03, damping=0.5, armature=0.01, frictionloss=0.0, effort_limit=50.0)
 
@@ -15,8 +15,8 @@ def arm(**kw):
 
 
 def test_robot_package_is_the_home_of_the_robot_classes():
-    import robotdesigner.config as cfg
-    import robotdesigner.robot as robot
+    import robotenv.config as cfg
+    import robotenv.robot as robot
 
     assert cfg.ParametricArm is robot.ParametricArm and cfg.TwoFingerGripper is robot.TwoFingerGripper
     assert cfg.chain is robot.chain and cfg.Pose is robot.Pose

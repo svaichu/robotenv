@@ -7,11 +7,11 @@ pytest.importorskip("torchrl")
 
 from torchrl.envs.utils import check_env_specs  # noqa: E402
 
-from robotdesigner.config import TwoFingerGripper  # noqa: E402
-from robotdesigner.envs import make_env  # noqa: E402
-from robotdesigner.simulators.mujoco.compile import compile_robot  # noqa: E402
+from robotenv.config import TwoFingerGripper  # noqa: E402
+from robotenv.envs import make_env  # noqa: E402
+from robotenv.simulators.mujoco.compile import compile_robot  # noqa: E402
 from tests.test_mujoco_env import COMMON, make_cfg  # noqa: E402,F401
-from robotdesigner.robot import chain  # noqa: E402
+from robotenv.robot import chain  # noqa: E402
 from dataclasses import replace  # noqa: E402
 
 

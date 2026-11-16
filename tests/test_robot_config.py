@@ -1,6 +1,6 @@
 import pytest
 
-from robotdesigner.config import (
+from robotenv.config import (
     Capsule,
     ConfigError,
     JointSpec,

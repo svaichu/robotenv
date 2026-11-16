@@ -5,9 +5,9 @@ from dataclasses import replace
 import numpy as np
 import torch
 
-from robotdesigner.config import ControlConfig, FixedGains, MujocoOptions, SimConfig, WarpOptions
-from robotdesigner.config.providers import get_task_provider
-from robotdesigner.envs import make_env
+from robotenv.config import ControlConfig, FixedGains, MujocoOptions, SimConfig, WarpOptions
+from robotenv.config.providers import get_task_provider
+from robotenv.envs import make_env
 
 WARP_OPTIONS = WarpOptions(njmax=128, nconmax=32, cuda_graph=False)
 
@@ -33,7 +33,7 @@ def with_control(cfg, mode, gains=None, scale=None):
 def build(cfg):
     """make_env, except that the Warp simulator on the library's CPU device (tests only) is built directly."""
     if cfg.sim.simulator == "warp" and cfg.sim.device == "cpu":
-        from robotdesigner.simulators.warp.env import WarpEnv
+        from robotenv.simulators.warp.env import WarpEnv
 
         return WarpEnv(cfg, get_task_provider(cfg.task.params.provider).build(cfg, "warp"))
     return make_env(cfg)

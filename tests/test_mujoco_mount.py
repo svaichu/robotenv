@@ -7,11 +7,11 @@ import pytest
 
 mujoco = pytest.importorskip("mujoco")
 
-from robotdesigner.config import (  # noqa: E402
+from robotenv.config import (  # noqa: E402
     BaseEnvConfig, ConfigError, ExternalRobot, MobileMount, Mount, Pose, chain, kinematics as kin, world_mount,
 )
-from robotdesigner.config.mount import compose  # noqa: E402
-from robotdesigner.simulators.mujoco.compile import compile_robot  # noqa: E402
+from robotenv.config.mount import compose  # noqa: E402
+from robotenv.simulators.mujoco.compile import compile_robot  # noqa: E402
 from tests.toy_provider import ReachParams  # noqa: E402
 from tests.toy_provider.framed import ELSEWHERE, BadParams, FRAME, FramedParams  # noqa: E402
 
@@ -23,7 +23,7 @@ OFFSET = Pose((0.1, -0.2, 0.05), (math.cos(0.3), 0.0, 0.0, math.sin(0.3)))
 
 
 def cfg_of(params, mount, robot=ARM):
-    from robotdesigner.config import OwnReachable
+    from robotenv.config import OwnReachable
 
     return (
         BaseEnvConfig().robot(robot)
@@ -82,7 +82,7 @@ def test_the_world_end_effector_follows_the_oracle():
 def test_the_base_frame_end_effector_is_the_same_in_two_scenes():
     """The point of the mount: the same arm at the same q sees the same base-frame end effector wherever the scene puts it."""
     pytest.importorskip("torchrl")
-    from robotdesigner.envs import make_env
+    from robotenv.envs import make_env
 
     def ee_in_base(cfg):
         env = make_env(cfg)
@@ -119,7 +119,7 @@ def test_a_marker_the_scene_does_not_have_is_refused():
 
 def test_the_built_env_records_the_world_mount_and_the_marker_stays_out_of_the_spaces():
     pytest.importorskip("torchrl")
-    from robotdesigner.envs import make_env
+    from robotenv.envs import make_env
 
     cfg = cfg_of(FramedParams("reach", 0.0, False), Mount(OFFSET))
     env = make_env(cfg)
@@ -129,7 +129,7 @@ def test_the_built_env_records_the_world_mount_and_the_marker_stays_out_of_the_s
 
 
 def test_a_floating_robot_spawns_at_the_world_mount_with_its_heading():
-    from robotdesigner.config import get_robot_provider
+    from robotenv.config import get_robot_provider
 
     floater = get_robot_provider("toyrobot").describe("floater")
     assert isinstance(floater, ExternalRobot) and floater.home_root is not None
