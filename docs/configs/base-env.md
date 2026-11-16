@@ -149,8 +149,8 @@ overrides. A sweep only **expands**: it launches nothing. Running a family on ma
 
 ## Inspecting: `print`, `explain`, `diff`
 
-`print(cfg)` (the `repr`) shows a table of every field with its value and where it came from (`set` or `default`); in a notebook the same text is shown in a fixed-width block.
-`explain()` is that table plus, for an external robot, its licence row. `diff()` returns `{path: (default, value)}` against a pristine `BaseEnvConfig()`.
+`print(cfg)` (the `repr`) groups the fields by part (a ready robot as its per-joint table) and tags each value `[set]` or `[default]`; fields that are `None` are left out, and in a notebook the same text is shown in a fixed-width block.
+`explain()` is the flat table of every field with its value and source (plus, for an external robot, its licence row). `diff()` returns `{path: (default, value)}` against a pristine `BaseEnvConfig()`.
 
 ```python
 assert set(cfg.diff()) >= {"robot.n", "robot.axes", "robot.total_length", "sim.num_envs", "sim.seed"}

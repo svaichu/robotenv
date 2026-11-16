@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from .._canon import check_keys, within
-from .._pretty import oneline, pre_html
+from .._pretty import fmt, indent, kv, oneline, pre_html
 from .control import CONTROL_MODES, NATIVE_MODES, ControlConfig, FixedGains, NativeGains
 from .defaults import DEFAULTS, DEFAULTS_VERSION
 from .env import EnvConfig
@@ -557,13 +557,22 @@ class BaseEnvConfig:
     __hash__ = None  # type: ignore[assignment]
 
     def __repr__(self) -> str:
-        """The ``explain()`` table without the licence lookup. Never raises: a config that cannot resolve its control
-        values yet prints them as written."""
+        """The config grouped like an ``EnvConfig`` (the robot as its per-joint table, then control, task and sim), each
+        value tagged ``[set]`` or ``[default]``; fields that are ``None`` are left out. ``explain()`` is the flat
+        table. Never raises: a config that cannot resolve its control values yet prints them as written."""
         try:
             rows = self._fields(resolved=True)
         except Exception:
             rows = self._fields(resolved=False)
-        return self._render(rows)
+        out = [f"BaseEnvConfig (defaults version {DEFAULTS_VERSION})"]
+        for section in _SECTIONS:
+            mine = [(p, v, s) for p, v, s in rows if p.split(".")[0] == section]
+            if section == "robot" and len(mine) == 1 and mine[0][0] == "robot":  # a ready robot prints itself
+                out += ["  robot  [set]", indent(repr(mine[0][1]), "    ")]
+                continue
+            pairs = [(p.split(".", 1)[1], None if fmt(v) == "" else f"{fmt(v)}  [{s}]") for p, v, s in mine]
+            out += [f"  {section}", *kv(pairs, prefix="    ")]
+        return "\n".join(out)
 
     def _repr_html_(self) -> str:
         return pre_html(repr(self))
