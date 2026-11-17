@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from robot_designer import Capsule, JointSpec, LinkSpec, ParametricArm, Pose, Segment, ToolSpec, TwoFingerGripper, chain
+from robotdesigner import Capsule, JointSpec, LinkSpec, ParametricArm, Pose, Segment, ToolSpec, TwoFingerGripper, chain
 
 from ..errors import ConfigError
 from .external import ACTUATOR_KINDS, EndEffectorRef, ExternalJoint, ExternalRobot
@@ -18,7 +18,7 @@ _KINDS = {"parametric_arm": ParametricArm, "external_robot": ExternalRobot}
 
 
 def robot_from_dict(d: Mapping[str, Any]) -> ParametricArm | ExternalRobot:
-    """The robot ``d`` describes, dispatching on its ``kind`` (``robot_designer`` or ``external_robot``)."""
+    """The robot ``d`` describes, dispatching on its ``kind`` (``robotdesigner`` or ``external_robot``)."""
     if not isinstance(d, Mapping):
         raise ConfigError("", f"expected a mapping, got {type(d).__name__}")
     if "kind" not in d:

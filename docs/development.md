@@ -33,7 +33,7 @@ imported lazily, by `make_env` and by the provider's `build`.
 pip install -e ".[env,robosuite,viz,dev]"      # + ".[warp]" on a machine with an NVIDIA GPU
 ```
 
-Python >= 3.10. The repository is a uv workspace: `packages/robot-designer` is the separate `robot-designer` distribution (`ParametricArm` and friends, numpy only; its tests are in `packages/robot-designer/tests`, run with `uv run --package robot-designer --extra dev pytest packages/robot-designer`), and `robotenv` depends on it. Extras: `env` (torch, TorchRL, tensordict, MuJoCo), `robosuite`, `warp`, `viz`, `yaml`, `dev` (pytest, ruff, pyyaml). The lock file `uv.lock` pins one resolution for `uv run`.
+Python >= 3.10. The repository is a uv workspace: `packages/robotdesigner` is the separate `robotdesigner` distribution (`ParametricArm` and friends, numpy only; its tests are in `packages/robotdesigner/tests`, run with `uv run --package robotdesigner --extra dev pytest packages/robotdesigner`), and `robotenv` depends on it. Extras: `env` (torch, TorchRL, tensordict, MuJoCo), `robosuite`, `warp`, `viz`, `yaml`, `dev` (pytest, ruff, pyyaml). The lock file `uv.lock` pins one resolution for `uv run`.
 
 ## Tests
 

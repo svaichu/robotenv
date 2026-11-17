@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-import robot_designer as pa
+import robotdesigner as pa
 
 COMMON = dict(radius=0.02, damping=0.1, armature=0.01, frictionloss=0.0, effort_limit=50.0)
 
@@ -25,6 +25,6 @@ def test_imports_without_robotenv_or_an_engine():
     code = (
         "import sys\n"
         "for m in ['robotenv', 'torch', 'mujoco', 'warp']: sys.modules[m] = None\n"
-        "import robot_designer\n"
+        "import robotdesigner\n"
     )
     subprocess.run([sys.executable, "-c", code], check=True)

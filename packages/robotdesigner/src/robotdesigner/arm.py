@@ -272,7 +272,7 @@ class ParametricArm:
 
     def __repr__(self) -> str:
         """The arm as a header, one table row per joint and, below it, the parts that are set. Empty columns and
-        unset parts are left out (see ``robot_designer._pretty``)."""
+        unset parts are left out (see ``robotdesigner._pretty``)."""
         head = f"ParametricArm  n={self.n}  hash={self.config_hash}" + (f"  label={self.label}" if self.label else "")
         identity = Pose.identity()
         rows = [

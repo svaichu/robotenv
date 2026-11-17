@@ -1,9 +1,9 @@
-# robot-designer
+# robotdesigner
 
 Parametric robot arms as frozen, validated, hashable data. Numpy only: no simulator is imported.
 
 ```python
-from robot_designer import chain
+from robotdesigner import chain
 
 arm = chain(3, "zyy", total_length=0.9, total_mass=3.0,
             radius=0.02, damping=0.1, armature=0.01, frictionloss=0.0, effort_limit=50.0)
