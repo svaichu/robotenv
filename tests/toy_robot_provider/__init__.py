@@ -119,6 +119,58 @@ PASSIVE = """
 </mujoco>
 """
 
+# A 4-joint arm with a two-finger hand: a tendon, an equality, a contact exclude and sensors that refer into the hand,
+# for cutting the arm short (``robotdesigner.eliminate_joints``). Describe it with ``driven=GRIPPER4_ARM``.
+GRIPPER4 = """
+<mujoco model="gripper4">
+  <compiler angle="radian"/>
+  <worldbody>
+    <body name="base">
+      <body name="l1" pos="0 0 0.1">
+        <joint name="j1" type="hinge" axis="0 0 1" range="-2 2"/>
+        <geom type="capsule" fromto="0 0 0 0.3 0 0" size="0.02" mass="1"/>
+        <body name="l2" pos="0.3 0 0">
+          <joint name="j2" type="hinge" axis="0 1 0" range="-1.5 1.5"/>
+          <geom type="capsule" fromto="0 0 0 0.3 0 0" size="0.02" mass="1"/>
+          <body name="l3" pos="0.3 0 0" euler="0 0 0.3">
+            <joint name="j3" type="hinge" axis="0 1 0" range="-1.5 1.5"/>
+            <geom type="capsule" fromto="0 0 0 0.2 0 0" size="0.02" mass="1"/>
+            <body name="hand" pos="0.2 0 0.01">
+              <joint name="j4" type="hinge" axis="1 0 0" range="-1 1"/>
+              <geom type="box" size="0.02 0.04 0.02" mass="0.3"/>
+              <site name="ee" pos="0.05 0 0"/>
+              <body name="f1" pos="0.03 0.02 0">
+                <joint name="fj1" type="slide" axis="0 1 0" range="0 0.04"/>
+                <geom type="box" size="0.01 0.005 0.01" mass="0.05"/>
+              </body>
+              <body name="f2" pos="0.03 -0.02 0">
+                <joint name="fj2" type="slide" axis="0 -1 0" range="0 0.04"/>
+                <geom type="box" size="0.01 0.005 0.01" mass="0.05"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <contact><exclude body1="l3" body2="hand"/></contact>
+  <tendon><fixed name="split"><joint joint="fj1" coef="0.5"/><joint joint="fj2" coef="0.5"/></fixed></tendon>
+  <equality><joint joint1="fj1" joint2="fj2"/></equality>
+  <actuator>
+    <position name="a1" joint="j1" kp="100" forcerange="-40 40"/>
+    <position name="a2" joint="j2" kp="100" forcerange="-30 30"/>
+    <position name="a3" joint="j3" kp="100" forcerange="-20 20"/>
+    <position name="a4" joint="j4" kp="50" forcerange="-10 10"/>
+    <position name="grip" joint="fj1" kp="20" ctrlrange="0 0.04"/>
+  </actuator>
+  <sensor><jointpos joint="j2"/><jointpos joint="fj1"/><framepos objtype="site" objname="ee"/></sensor>
+  <keyframe>
+    <key name="home" qpos="0.1 -0.2 0.3 0.4 0.01 0.01" ctrl="0.1 -0.2 0.3 0.4 0.02"/>
+  </keyframe>
+</mujoco>
+"""
+GRIPPER4_ARM = ("j1", "j2", "j3", "j4")
+
 # The same arm with damped servos (kv): the dynamics are not chaotic, which the CPU-versus-Warp parity tests need.
 ARM3D = (
     ARM3.replace('model="arm3"', 'model="arm3d"')
@@ -137,6 +189,7 @@ MODELS = {
     "floater": ("floater.xml", FLOATER),
     "armfinger": ("armfinger.xml", ARMFINGER),
     "passive": ("passive.xml", PASSIVE),
+    "gripper4": ("gripper4.xml", GRIPPER4),
 }
 
 

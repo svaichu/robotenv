@@ -3757,13 +3757,17 @@ dependencies = [
 dev = [
     { name = "pytest" },
 ]
+mujoco = [
+    { name = "mujoco" },
+]
 
 [package.metadata]
 requires-dist = [
+    { name = "mujoco", marker = "extra == 'mujoco'", specifier = ">=3.13" },
     { name = "numpy", specifier = ">=1.26" },
     { name = "pytest", marker = "extra == 'dev'" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["mujoco", "dev"]
 
 [[package]]
 name = "robotenv"

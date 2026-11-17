@@ -12,5 +12,14 @@ __version__ = "0.1.0"
 
 __all__ = [
     "Capsule", "ConfigError", "JointSpec", "LinkSpec", "ParametricArm", "Pose", "Segment", "ToolSpec",
-    "TwoFingerGripper", "chain",
+    "TwoFingerGripper", "chain", "eliminate_joints",
 ]
+
+
+def __getattr__(name):
+    # Lazy: the tool needs robotenv and MuJoCo, which ``import robotdesigner`` does not import.
+    if name == "eliminate_joints":
+        from .reduce import eliminate_joints
+
+        return eliminate_joints
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

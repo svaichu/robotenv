@@ -25,6 +25,7 @@ def test_imports_without_robotenv_or_an_engine():
     code = (
         "import sys\n"
         "for m in ['robotenv', 'torch', 'mujoco', 'warp']: sys.modules[m] = None\n"
-        "import robotdesigner\n"
+        "import robotdesigner, robotdesigner.reduce, robotdesigner.provider\n"
+        "assert 'eliminate_joints' in robotdesigner.__all__\n"
     )
     subprocess.run([sys.executable, "-c", code], check=True)

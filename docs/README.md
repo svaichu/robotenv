@@ -58,6 +58,7 @@ assert (env_cfg.robot.config_hash, env_cfg.env_hash) == (cfg.resolve().robot.con
 |---|---|
 | [`menagerie`](robots/menagerie.md) | MuJoCo Menagerie robots as `ExternalRobot`s: `describe`, cards, what is driven and held, spawn pose, licences, which robots run |
 | [`maniskill`](robots/maniskill.md) | ManiSkill's robots as `ExternalRobot`s; ManiSkill is a robot provider only, for now (no tasks, SAPIEN simulates nothing): `describe`, what `spec` builds from a URDF, the integrator to set, the mesh cache, Warp, which robots run |
+| [`reduced`](robots/reduced.md) | `robotdesigner.eliminate_joints`: any external robot without its last `k` joints and links; the new end effector, how it refers to the original |
 | [Writing a robot provider](robots/writing-a-robot-provider.md) | bring your own source of robot models, end to end |
 
 ## Working with it
