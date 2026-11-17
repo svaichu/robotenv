@@ -8,7 +8,7 @@ version = "0.2.1"
 description = "Robot embodiments as validated, hashable data, instantiated in batched RL environments"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["numpy>=1.26"]
+dependencies = ["numpy>=1.26", "parametric-arm>=0.1"]
 
 [project.optional-dependencies]
 env = [
@@ -29,6 +29,12 @@ maniskill = ["robotenv[env]", "mani_skill>=3.0,<3.1; python_full_version < '3.13
 yaml = ["pyyaml"]
 viz = ["imageio", "imageio-ffmpeg", "pillow"]
 dev = ["pytest", "ruff", "pyyaml"]
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+parametric-arm = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/robotenv"]

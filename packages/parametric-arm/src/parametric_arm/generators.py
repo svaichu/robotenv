@@ -5,8 +5,8 @@ from __future__ import annotations
 import numbers
 from typing import Any, Sequence
 
-from .._canon import as_float
-from ..errors import ConfigError
+from ._canon import as_float
+from .errors import ConfigError
 from .arm import Capsule, JointSpec, LinkSpec, ParametricArm, Pose, Segment, ToolSpec
 from .gripper import TwoFingerGripper
 

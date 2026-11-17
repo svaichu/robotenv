@@ -20,6 +20,12 @@ resolution-markers = [
     "python_full_version < '3.10.12' and sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
 ]
 
+[manifest]
+members = [
+    "parametric-arm",
+    "robotenv",
+]
+
 [[package]]
 name = "absl-py"
 version = "2.5.1"
@@ -3041,6 +3047,28 @@ wheels = [
 ]
 
 [[package]]
+name = "parametric-arm"
+version = "0.1.0"
+source = { editable = "packages/parametric-arm" }
+dependencies = [
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "numpy", version = "2.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "numpy", specifier = ">=1.26" },
+    { name = "pytest", marker = "extra == 'dev'" },
+]
+provides-extras = ["dev"]
+
+[[package]]
 name = "parso"
 version = "0.8.7"
 source = { registry = "https://pypi.org/simple" }
@@ -3745,6 +3773,7 @@ dependencies = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
     { name = "numpy", version = "2.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "parametric-arm" },
 ]
 
 [package.optional-dependencies]
@@ -3808,6 +3837,7 @@ requires-dist = [
     { name = "mujoco-menagerie", marker = "python_full_version >= '3.10.12' and extra == 'menagerie'", specifier = ">=2026.9.0" },
     { name = "mujoco-warp", marker = "extra == 'warp'", specifier = ">=3.13" },
     { name = "numpy", specifier = ">=1.26" },
+    { name = "parametric-arm", editable = "packages/parametric-arm" },
     { name = "pillow", marker = "extra == 'viz'" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "pyyaml", marker = "extra == 'dev'" },

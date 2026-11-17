@@ -4,24 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+# ``ConfigError`` lives in ``parametric_arm`` (the lowest layer); it is re-exported here so there is one class.
+from parametric_arm.errors import ConfigError
 
-class ConfigError(ValueError):
-    """Invalid configuration. The message starts with the path of the offending field."""
-
-    def __init__(self, path: str, message: str):
-        self.path = path
-        self.reason = message
-        super().__init__(f"{path}: {message}" if path else message)
-
-    def prefixed(self, prefix: str) -> "ConfigError":
-        """The same error, one level further from the root."""
-        if not self.path:
-            path = prefix
-        elif self.path.startswith("["):
-            path = prefix + self.path
-        else:
-            path = f"{prefix}.{self.path}"
-        return ConfigError(path, self.reason)
+__all__ = ["ConfigError", "Problem"]
 
 
 @dataclass(frozen=True)

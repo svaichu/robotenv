@@ -6,7 +6,7 @@ import math
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from .._canon import (
+from ._canon import (
     HASH_DISPLAY_LENGTH,
     as_float,
     as_vector,
@@ -15,8 +15,8 @@ from .._canon import (
     sha256_hex,
     within,
 )
-from .._pretty import kv, num, table
-from ..errors import ConfigError
+from ._pretty import kv, num, table
+from .errors import ConfigError
 from .gripper import TwoFingerGripper
 from .pose import Pose, _normalize_quat
 
@@ -272,7 +272,7 @@ class ParametricArm:
 
     def __repr__(self) -> str:
         """The arm as a header, one table row per joint and, below it, the parts that are set. Empty columns and
-        unset parts are left out (see ``robotenv._pretty``)."""
+        unset parts are left out (see ``parametric_arm._pretty``)."""
         head = f"ParametricArm  n={self.n}  hash={self.config_hash}" + (f"  label={self.label}" if self.label else "")
         identity = Pose.identity()
         rows = [

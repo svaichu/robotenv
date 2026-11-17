@@ -4,12 +4,10 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+from parametric_arm import Capsule, JointSpec, LinkSpec, ParametricArm, Pose, Segment, ToolSpec, TwoFingerGripper, chain
+
 from ..errors import ConfigError
-from .arm import Capsule, JointSpec, LinkSpec, ParametricArm, Segment, ToolSpec
 from .external import ACTUATOR_KINDS, EndEffectorRef, ExternalJoint, ExternalRobot
-from .generators import chain
-from .gripper import TwoFingerGripper
-from .pose import Pose
 
 __all__ = [
     "ACTUATOR_KINDS", "Capsule", "EndEffectorRef", "ExternalJoint", "ExternalRobot", "JointSpec", "LinkSpec",

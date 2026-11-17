@@ -6,9 +6,9 @@ import math
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from .._canon import as_vector, check_keys
-from .._pretty import fmt
-from ..errors import ConfigError
+from ._canon import as_vector, check_keys
+from ._pretty import fmt
+from .errors import ConfigError
 
 
 def _normalize_quat(q: tuple[float, ...], path: str) -> tuple[float, ...]:
