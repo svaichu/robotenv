@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-# ``ConfigError`` lives in ``parametric_arm`` (the lowest layer); it is re-exported here so there is one class.
-from parametric_arm.errors import ConfigError
+# ``ConfigError`` lives in ``robot_designer`` (the lowest layer); it is re-exported here so there is one class.
+from robot_designer.errors import ConfigError
 
 __all__ = ["ConfigError", "Problem"]
 

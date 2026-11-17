@@ -25,7 +25,7 @@ from .._canon import (
 )
 from .._pretty import kv, table
 from ..errors import ConfigError
-from parametric_arm import Pose
+from robot_designer import Pose
 
 ACTUATOR_KINDS = ("position", "torque", "velocity", "mixed")
 

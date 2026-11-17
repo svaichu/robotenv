@@ -8,7 +8,7 @@ version = "0.2.1"
 description = "Robot embodiments as validated, hashable data, instantiated in batched RL environments"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["numpy>=1.26", "parametric-arm>=0.1"]
+dependencies = ["numpy>=1.26", "robot-designer>=0.1"]
 
 [project.optional-dependencies]
 env = [
@@ -34,7 +34,7 @@ dev = ["pytest", "ruff", "pyyaml"]
 members = ["packages/*"]
 
 [tool.uv.sources]
-parametric-arm = { workspace = true }
+robot-designer = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/robotenv"]
