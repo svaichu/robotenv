@@ -286,3 +286,14 @@ def test_robosuite_lift_runs_on_a_maniskill_robot_mounted_on_the_scenes_frame():
 
 
 PANDA = PROVIDER.describe("panda")
+
+
+def test_the_mjcf_humanoid_is_driven_by_pd_servos_limited_by_its_motors():
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        r = PROVIDER.describe("humanoid")
+    assert r.n == 21 and r.actuator_kind == "position" and r.home_root is not None
+    limits = {j.name: j.effort_limit for j in r.joints}
+    assert limits["right_hip_y"] == 120.0 and limits["abdomen_z"] == 40.0 and limits["left_ankle_x"] == 20.0

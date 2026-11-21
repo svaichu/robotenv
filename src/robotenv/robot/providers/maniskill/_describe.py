@@ -63,6 +63,8 @@ def describe(name, entry, controlled, end_effector, keyframe, effort_limit) -> E
             a = next(a for a in range(model.nu) if int(model.actuator_trnid[a, 0]) == j)
             if model.actuator_forcelimited[a]:  # an MJCF's own actuator
                 limit = float(np.abs(model.actuator_forcerange[a]).max())
+        if limit is None and facts.kind == "mjcf" and model.jnt_actfrclimited[j]:  # from the motor the spec replaced
+            limit = float(np.abs(model.jnt_actfrcrange[j]).max())
         if limit is None and isinstance(effort_limit, dict) and n in effort_limit:
             limit = float(effort_limit[n])
         elif limit is None and effort_limit is not None and not isinstance(effort_limit, dict):

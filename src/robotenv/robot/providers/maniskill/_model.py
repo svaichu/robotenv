@@ -465,7 +465,26 @@ def open_spec(facts: AgentFacts) -> mujoco.MjSpec:
     bodies = {model.body(b).name for b in range(model.nbody)}
     free = [j for j in range(model.njnt) if int(model.jnt_type[j]) == _FREE]
 
-    has_actuator = {int(model.actuator_trnid[a, 0]) for a in range(model.nu) if int(model.actuator_trntype[a]) == int(mujoco.mjtTrn.mjTRN_JOINT)}
+    # ManiSkill drives an MJCF's joints with its controller's PD drives and ignores the model's own motors: a torque
+    # motor on a joint of the controller is replaced by a PD servo here, keeping the motor's largest torque (gear x
+    # control range) as the joint's force limit when the controller states none.
+    servo_joints = {joint(s.joint) for s in facts.servos}
+    motors: dict[int, float | None] = {}  # actuator id -> its largest torque
+    for a in range(model.nu):
+        if (
+            facts.kind == "mjcf" and int(model.actuator_trntype[a]) == int(mujoco.mjtTrn.mjTRN_JOINT)
+            and int(model.actuator_trnid[a, 0]) in servo_joints
+            and int(model.actuator_gaintype[a]) == int(mujoco.mjtGain.mjGAIN_FIXED)
+            and int(model.actuator_biastype[a]) == int(mujoco.mjtBias.mjBIAS_NONE)
+        ):
+            motors[a] = float(abs(model.actuator_gear[a, 0]) * np.abs(model.actuator_ctrlrange[a]).max()) if model.actuator_ctrllimited[a] else None
+    torque = {int(model.actuator_trnid[a, 0]): t for a, t in motors.items()}
+    for a in sorted(motors, reverse=True):
+        spec.delete(spec.actuators[a])
+    has_actuator = {
+        int(model.actuator_trnid[a, 0]) for a in range(model.nu)
+        if a not in motors and int(model.actuator_trntype[a]) == int(mujoco.mjtTrn.mjTRN_JOINT)
+    }
     added: list[int] = []  # joint ids of the actuators added, in actuator order
     for servo in facts.servos:
         j = joint(servo.joint)
@@ -477,13 +496,14 @@ def open_spec(facts: AgentFacts) -> mujoco.MjSpec:
         act.gainprm[0] = servo.kp
         act.biastype = mujoco.mjtBias.mjBIAS_AFFINE
         act.biasprm[:3] = [0.0, -servo.kp, -servo.kd]
-        if servo.force_limit is not None:
+        limit = servo.force_limit if servo.force_limit is not None else torque.get(j)
+        if limit is not None:
             # The limit goes on the joint (its actuator-force range), not on the actuator: MuJoCo's implicit integrators
             # drop the damping term of an actuator whose own force range clamps it, and a saturated servo on a light
             # link then diverges (measured on so100, koch-v1.1 and the Allegro hand). The clamped quantity is the same.
             driven = spec.joint(servo.joint)
             driven.actfrclimited = _ON
-            driven.actfrcrange = [-servo.force_limit, servo.force_limit]
+            driven.actfrcrange = [-limit, limit]
         if model.jnt_limited[j]:
             act.ctrllimited = _ON
             act.ctrlrange = [float(x) for x in model.jnt_range[j]]
@@ -521,7 +541,8 @@ def open_spec(facts: AgentFacts) -> mujoco.MjSpec:
         if free and not facts.fix_root_link:  # the keyframe's root pose, in the model's world frame
             a = model.jnt_qposadr[free[0]]
             qpos[a : a + 7] = [*key.pos, *key.quat]
-        ctrl = list(model.key_ctrl[0]) if model.nkey else [0.0] * model.nu  # an MJCF's own actuators keep their value
+        kept = [a for a in range(model.nu) if a not in motors]
+        ctrl = [float(model.key_ctrl[0][a]) if model.nkey else 0.0 for a in kept]  # an MJCF's own actuators keep their value
         ctrl += [float(qpos[model.jnt_qposadr[j]]) for j in added]
         spec.add_key(name=key.name, qpos=qpos.tolist(), ctrl=ctrl)
     spec.compile()  # ``MjSpec.attach`` sizes a keyframe against the last compile: the edits above must be in it
