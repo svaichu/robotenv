@@ -132,3 +132,30 @@ def test_make_env_steps_a_fixed_base_and_refuses_the_wrong_mount():
     floating = PROVIDER.describe("gr3v2_1_1")
     with pytest.raises(ConfigError):
         BaseEnvConfig().robot(floating).task(mount=Mount(Pose.identity())).sim(num_envs=1, scene="plain_floor").build()
+
+
+def test_cameras_attach_to_a_body_of_the_model_and_a_missing_body_is_rejected():
+    import dataclasses
+
+    from robotenv.config import EnvConfig
+    from robotenv.robot import CameraMount
+    from robotenv.simulators.mujoco.compile import compile_robot
+
+    robot = PROVIDER.describe("gr1t1", None)
+    cams = (CameraMount("hand", "right_end_effector_link", Pose((0.0, 0.0, 0.1), (1.0, 0.0, 0.0, 0.0)), fovy=70.0),
+            CameraMount("chest", "base", Pose((0.0, 0.0, 1.0), (1.0, 0.0, 0.0, 0.0))))
+    with_cams = dataclasses.replace(robot, cameras=cams)
+    assert with_cams.config_hash != robot.config_hash and type(robot).from_dict(with_cams.to_dict()) == with_cams
+    cfg = BaseEnvConfig().robot(with_cams).sim(num_envs=1).resolve()
+    assert EnvConfig.from_dict(cfg.to_dict()) == cfg
+    model = compile_robot(cfg).model
+    data = mujoco.MjData(model)
+    mujoco.mj_forward(model, data)
+    cam = lambda n: data.cam_xpos[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_CAMERA, n)]
+    np.testing.assert_allclose(cam("chest"), [0.0, 0.0, 1.0], atol=1e-9)
+    hand = data.xpos[mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "ext_right_end_effector_link")]
+    assert abs(np.linalg.norm(cam("hand") - hand) - 0.1) < 1e-9  # 10 cm from the body, along its own z
+    bad = dataclasses.replace(robot, cameras=(CameraMount("x", "nope", Pose.identity()),))
+    with pytest.raises(ConfigError) as e:
+        compile_robot(BaseEnvConfig().robot(bad).sim(num_envs=1).resolve())
+    assert "cameras[0].parent" in e.value.path
