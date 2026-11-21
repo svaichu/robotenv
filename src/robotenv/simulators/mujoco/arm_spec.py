@@ -135,3 +135,32 @@ def add_gripper(parent, arm: ParametricArm, tip: np.ndarray, *, conaffinity: int
             friction=[1.5, 0.005, 0.0001],
         )
     base.add_site(name="tcp", pos=list(g.tcp_offset))
+
+
+def add_cameras(owner, cameras, *, resolve) -> None:
+    """Add each ``CameraMount`` of a robot as a MuJoCo camera named ``camera.name``.
+
+    ``resolve(camera)`` returns ``(body, pose)``: the spec body the camera is fixed to and the camera's pose in that
+    body's frame. MuJoCo cameras look along their ``-z`` axis, as ``CameraMount`` documents.
+    """
+    for cam in cameras:
+        body, pose = resolve(cam)
+        body.add_camera(name=cam.name, pos=list(pose.pos), quat=list(pose.quat), fovy=cam.fovy)
+
+
+def arm_camera_target(base, last, tip: np.ndarray, arm: ParametricArm, spec):
+    """A ``resolve`` function for :func:`add_cameras` on a ``ParametricArm``: ``base`` is the base body, ``last`` the last
+    link body, ``tip`` its tip (as returned by :func:`add_arm`)."""
+    from ...robot import Pose
+
+    ee = arm.end_effector
+
+    def resolve(cam):
+        if cam.parent == "base":
+            return base, cam.pose
+        if cam.parent == "ee":
+            pos = tip + np.asarray(ee.pos) + _rotate(ee.quat, cam.pose.pos)
+            return last, Pose(tuple(float(x) for x in pos), tuple(_quat_mul(ee.quat, cam.pose.quat)))
+        return spec.body(cam.parent), cam.pose  # link_{i}
+
+    return resolve

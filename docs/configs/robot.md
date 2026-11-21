@@ -10,7 +10,7 @@ Everything on this page is numpy only (`robotenv.robot`, re-exported by `roboten
 import numpy as np
 
 from robotenv.config import (
-    Capsule, ConfigError, EndEffectorRef, ExternalJoint, ExternalRobot, JointSpec, LinkSpec, ParametricArm, Pose, Segment,
+    CameraMount, Capsule, ConfigError, EndEffectorRef, ExternalJoint, ExternalRobot, JointSpec, LinkSpec, ParametricArm, Pose, Segment,
     TwoFingerGripper, chain, kinematics as kin, register_robot_provider, robot_from_dict, unregister_robot_provider,
 )
 ```
@@ -124,6 +124,27 @@ assert error_of(lambda: JointSpec((0, 0, 0), None, 0.0, 0.0, 0.0, 1.0)).path == 
 
 Errors raised while a larger config is being parsed carry the full dotted path (`robot.segments[1].joint.range`).
 
+## Cameras
+
+A robot can carry cameras. `CameraMount(name, parent, pose, fovy=45.0)` fixes a camera to a frame of the robot: `pose` is the camera frame in the
+`parent` frame, with MuJoCo's convention (the camera looks along its `-z` axis, `+y` is up in the image); `fovy` is the vertical field of view in degrees.
+`parent` is `"base"` (the mount frame; any robot), `"ee"` or `"link_{i}"` (a `ParametricArm`), or the name of a body of the model (an `ExternalRobot`).
+Cameras are part of the robot's identity (hashed), but a robot without cameras hashes as it did before. Names must be distinct and not one of the scene views
+(`iso`, `front`, `side`, `top`). `chain(..., cameras=[...])` and `Chain(cameras=[...])` take them.
+
+```python
+wrist = CameraMount("wrist", "ee", Pose((0.0, 0.0, 0.05), (1.0, 0.0, 0.0, 0.0)), fovy=60.0)
+seeing = chain(3, "zyy", total_length=0.9, total_mass=3.0, radius=0.03, damping=0.5, armature=0.01,
+               frictionloss=0.0, effort_limit=50.0, cameras=[wrist])
+assert seeing.cameras == (wrist,) and seeing.config_hash != arm.config_hash
+assert error_of(lambda: chain(3, "zyy", total_length=0.9, total_mass=3.0, radius=0.03, damping=0.5, armature=0.01,
+                              frictionloss=0.0, effort_limit=50.0,
+                              cameras=[CameraMount("c", "link_7", Pose.identity())])).path == "cameras[0].parent"
+```
+
+The CPU MuJoCo simulator adds each one as a model camera under its own name, so `env.render(i, camera="wrist")` shows its view (any `size`). The Warp
+simulator compiles the same model, and its `render` takes the same names. Cameras are not observations: nothing is added to the observation or action spaces.
+
 ## Forward kinematics
 
 `robotenv.config.kinematics` is a pure-numpy oracle, independent of any simulator: the tests compare every simulator against it.
@@ -222,5 +243,5 @@ assert error_of(lambda: ExternalRobot.from_dict(panda_like.to_dict())).path == "
 ## What the CPU MuJoCo simulator builds from it
 
 The names are stable, so tasks and your own code can look things up: bodies `base` (at the mount), `link_{i}`; hinges `joint_{i}`; capsule geoms `geom_{i}`; actuators
-`act_{i}`; the end effector is the site `ee`. With a gripper: joints `finger_joint_{0,1}`, actuator `act_gripper`, site `tcp`. Robot geoms collide with the scene; they collide with
+`act_{i}`; the end effector is the site `ee`. With a gripper: joints `finger_joint_{0,1}`, actuator `act_gripper`, site `tcp`. Cameras are model cameras named as in the config. Robot geoms collide with the scene; they collide with
 each other only if `MujocoOptions.self_collision` is true ([SimConfig](sim.md)). Mass and inertia come from the capsule unless the link gives explicit `inertia`.

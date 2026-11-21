@@ -34,6 +34,7 @@ from .compile import (
     _per_joint,
     inertia_scaled_gains,
 )
+from .arm_spec import add_cameras
 from .mount import resolve_world_mount
 from .scenes import apply_scene
 
@@ -157,6 +158,9 @@ class Facts:
             self.problems.append(Problem("robot.home_root", "the model has a free root joint: home_root is required"))
         elif not free and robot.home_root is not None:
             self.problems.append(Problem("robot.home_root", "the model has no free root joint: home_root must be None"))
+        for i, cam in enumerate(robot.cameras):
+            if cam.parent != "base" and _id(m, _OBJ.mjOBJ_BODY, cam.parent) < 0:
+                self.problems.append(Problem(f"robot.cameras[{i}].parent", f"the model has no body {cam.parent!r}"))
         ee = robot.end_effector
         if ee is not None:
             if ee.site is not None and _id(m, _OBJ.mjOBJ_SITE, ee.site) < 0:
@@ -264,6 +268,11 @@ def _build_external_spec(
     if ee is not None and ee.body is not None:
         body = spec.body(PREFIX + ee.body)
         body.add_site(name="ee", pos=list(ee.offset.pos), quat=list(ee.offset.quat))
+    base_body = spec.body("base")
+    add_cameras(
+        base_body, robot.cameras,
+        resolve=lambda cam: (base_body, cam.pose) if cam.parent == "base" else (spec.body(PREFIX + cam.parent), cam.pose),
+    )
     if own is not None:
         _add_own_actuators(spec, robot, cfg.control, *own)
     return spec

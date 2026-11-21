@@ -72,6 +72,7 @@ class Chain:
     end_effector: Any = NOT_SET
     tool: Any = NOT_SET
     gripper: Any = NOT_SET
+    cameras: Any = NOT_SET
     label: Any = NOT_SET
 
     def written(self) -> tuple[str, ...]:
@@ -107,5 +108,5 @@ class Chain:
             radius=self.radius, damping=self.damping, armature=self.armature,
             frictionloss=self.frictionloss, effort_limit=self.effort_limit,
             range=get("range"), home_qpos=get("home_qpos"), end_effector=get("end_effector"),
-            tool=get("tool"), gripper=get("gripper"), label=get("label", ""),
+            tool=get("tool"), gripper=get("gripper"), cameras=get("cameras", ()), label=get("label", ""),
         )

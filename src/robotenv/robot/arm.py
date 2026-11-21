@@ -17,6 +17,7 @@ from .._canon import (
 )
 from .._pretty import kv, num, table
 from ..errors import ConfigError
+from .camera import CameraMount, cameras_from_dict, check_cameras
 from .gripper import TwoFingerGripper
 from .pose import Pose, _normalize_quat
 
@@ -215,7 +216,8 @@ class ParametricArm:
     site.
     ``gripper`` is a parametric two-finger gripper mounted on the end effector (built by the MuJoCo simulator, adds one
     action dimension); ``tool`` is a named gripper that the simulator ignores. At most one of them is set.
-    ``label`` is metadata and does not enter the hash.
+    ``cameras`` are :class:`CameraMount` s fixed to ``base``, ``ee`` or ``link_{i}``; the MuJoCo simulator adds them to the
+    model under their own names. ``label`` is metadata and does not enter the hash.
     """
 
     schema_version: int
@@ -225,6 +227,7 @@ class ParametricArm:
     tool: ToolSpec | None
     label: str = ""
     gripper: TwoFingerGripper | None = None
+    cameras: tuple[CameraMount, ...] = ()
 
     def __post_init__(self):
         if isinstance(self.schema_version, bool) or self.schema_version not in SUPPORTED_SCHEMA_VERSIONS:
@@ -249,6 +252,16 @@ class ParametricArm:
             raise ConfigError("gripper", "expected a TwoFingerGripper or None")
         if self.gripper is not None and self.tool is not None:
             raise ConfigError("gripper", "give a gripper or a tool, not both")
+
+        cameras = check_cameras(self.cameras)
+        for i, c in enumerate(cameras):
+            ok = c.parent in ("base", "ee") or any(c.parent == f"link_{k}" for k in range(len(segments)))
+            if not ok:
+                raise ConfigError(
+                    f"cameras[{i}].parent",
+                    f"{c.parent!r} is not a frame of this arm; use 'base', 'ee' or 'link_0' to 'link_{len(segments) - 1}'",
+                )
+        object.__setattr__(self, "cameras", cameras)
 
         home = as_vector(self.home_qpos, len(segments), "home_qpos")
         for i, (q, s) in enumerate(zip(home, segments)):
@@ -291,6 +304,7 @@ class ParametricArm:
             ("end_effector", None if self.end_effector == identity else self.end_effector),
             ("tool", self.tool),
             ("gripper", self.gripper),
+            ("cameras", list(self.cameras) or None),
         ])
         return "\n".join([head, *table(headers, rows), *extras])
 
@@ -308,6 +322,8 @@ class ParametricArm:
         }
         if self.gripper is not None:  # absent when None, so the hash of an arm without a gripper is unchanged
             d["gripper"] = self.gripper.to_dict()
+        if self.cameras:  # likewise absent when empty
+            d["cameras"] = [c.to_dict() for c in self.cameras]
         return d
 
     @classmethod
@@ -316,7 +332,7 @@ class ParametricArm:
             d,
             {"kind", "schema_version", "segments", "home_qpos", "end_effector", "tool"},
             "",
-            optional={"label", "gripper"},
+            optional={"label", "gripper", "cameras"},
         )
         if d["kind"] != "parametric_arm":
             raise ConfigError("kind", f"expected 'parametric_arm', got {d['kind']!r}")
@@ -333,6 +349,7 @@ class ParametricArm:
             tool=None if tool is None else within("tool", ToolSpec.from_dict, tool),
             label=d.get("label", ""),
             gripper=None if gripper is None else within("gripper", TwoFingerGripper.from_dict, gripper),
+            cameras=cameras_from_dict(d.get("cameras", ())),
         )
 
     def hash_dict(self) -> dict[str, Any]:
