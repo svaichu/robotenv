@@ -56,8 +56,8 @@
     "status": "refused: not downloaded"
   },
   "humanoid": {
-    "holds": null,
-    "status": "refused: needs effort_limit"
+    "holds": false,
+    "status": "ok"
   },
   "koch-v1.1": {
     "holds": true,
