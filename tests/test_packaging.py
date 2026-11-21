@@ -80,3 +80,15 @@ def test_maniskill_provider_imports_without_an_engine_or_the_library():
         "        raise SystemExit('no error')\n"
     )
     subprocess.run([sys.executable, "-c", code], check=True)
+
+
+def test_grx_provider_imports_without_an_engine_and_names_its_robots():
+    code = (
+        "import sys\n"
+        f"for m in {BLOCKED!r}: sys.modules[m] = None\n"
+        "import robotenv.config as c\n"
+        "from robotenv.robot.providers.grx import PROVIDER, cards\n"
+        "assert 'grx' in c.list_robot_providers() and set(PROVIDER.names()) == set(cards()) and len(cards()) == 4\n"
+        "assert PROVIDER.license('gr1t1').startswith('GPL')\n"
+    )
+    subprocess.run([sys.executable, "-c", code], check=True)
