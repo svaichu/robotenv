@@ -6,13 +6,14 @@ from typing import Any, Mapping
 
 from ..errors import ConfigError
 from .arm import Capsule, JointSpec, LinkSpec, ParametricArm, Segment, ToolSpec
+from .camera import CameraMount
 from .external import ACTUATOR_KINDS, EndEffectorRef, ExternalJoint, ExternalRobot
 from .generators import chain
 from .gripper import TwoFingerGripper
 from .pose import Pose
 
 __all__ = [
-    "ACTUATOR_KINDS", "Capsule", "EndEffectorRef", "ExternalJoint", "ExternalRobot", "JointSpec", "LinkSpec",
+    "ACTUATOR_KINDS", "CameraMount", "Capsule", "EndEffectorRef", "ExternalJoint", "ExternalRobot", "JointSpec", "LinkSpec",
     "ParametricArm", "Pose", "Segment", "ToolSpec", "TwoFingerGripper", "chain", "robot_from_dict",
 ]
 

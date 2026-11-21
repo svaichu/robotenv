@@ -25,6 +25,7 @@ from .._canon import (
 )
 from .._pretty import kv, table
 from ..errors import ConfigError
+from .camera import CameraMount, cameras_from_dict, check_cameras
 from .pose import Pose
 
 ACTUATOR_KINDS = ("position", "torque", "velocity", "mixed")
@@ -109,7 +110,9 @@ class ExternalRobot:
     body at home in the model's world frame for a model with a free joint, else ``None``. ``keyframe`` names the model
     keyframe that sets the state of the joints that are not driven (finger joints). ``end_effector`` is ``None`` for a
     robot without one. ``actuator_kind`` describes the model's own actuators on ``joints``: ``position``, ``torque``,
-    ``velocity`` or ``mixed``. ``label`` is metadata and does not enter the hash.
+    ``velocity`` or ``mixed``. ``cameras`` are :class:`CameraMount` s fixed to ``base`` or to a body of the model
+    (``parent`` is the body's name in the model, without the prefix the compile adds). ``label`` is metadata and does
+    not enter the hash.
     """
 
     provider: str
@@ -123,8 +126,10 @@ class ExternalRobot:
     end_effector: EndEffectorRef | None
     actuator_kind: str
     label: str = ""
+    cameras: tuple[CameraMount, ...] = ()
 
     def __post_init__(self):
+        object.__setattr__(self, "cameras", check_cameras(self.cameras))
         for name in ("provider", "name", "entry", "source"):
             as_str(getattr(self, name), name)
         # Imported here: the registry is in the config package, which imports this one.
@@ -193,6 +198,7 @@ class ExternalRobot:
             ("actuator_kind", self.actuator_kind),
             ("home_root", self.home_root),
             ("end_effector", self.end_effector),
+            ("cameras", list(self.cameras) or None),
         ])
         return "\n".join([head, *table(["joint", "name", "range", "effort_limit", "home_q"], rows), *extras])
 
@@ -212,6 +218,7 @@ class ExternalRobot:
             "end_effector": None if self.end_effector is None else self.end_effector.to_dict(),
             "actuator_kind": self.actuator_kind,
             "label": self.label,
+            **({"cameras": [c.to_dict() for c in self.cameras]} if self.cameras else {}),  # absent when empty: hashes unchanged
         }
 
     @classmethod
@@ -223,7 +230,7 @@ class ExternalRobot:
                 "end_effector", "actuator_kind",
             },
             "",
-            optional={"label"},
+            optional={"label", "cameras"},
         )
         if d["kind"] != "external_robot":
             raise ConfigError("kind", f"expected 'external_robot', got {d['kind']!r}")
@@ -243,6 +250,7 @@ class ExternalRobot:
             end_effector=None if ee is None else within("end_effector", EndEffectorRef.from_dict, ee),
             actuator_kind=d["actuator_kind"],
             label=d.get("label", ""),
+            cameras=cameras_from_dict(d.get("cameras", ())),
         )
 
     def hash_dict(self) -> dict[str, Any]:

@@ -23,7 +23,7 @@ from .env import EnvConfig
 from ..errors import ConfigError, Problem
 from .providers import get_task_provider
 from .robot_providers import get_robot_provider
-from ..robot import ExternalRobot, ParametricArm, Pose, ToolSpec, TwoFingerGripper, robot_from_dict
+from ..robot import CameraMount, ExternalRobot, ParametricArm, Pose, ToolSpec, TwoFingerGripper, robot_from_dict
 from .sim import SIMULATOR_OPTIONS, SimConfig
 from .specs import NOT_SET, Chain
 from .mount import Mount, snapped
@@ -356,6 +356,13 @@ class BaseEnvConfig:
                     v = within(f"robot.{k}", ToolSpec.from_dict, v)
                 elif k == "gripper" and isinstance(v, Mapping):
                     v = within(f"robot.{k}", TwoFingerGripper.from_dict, v)
+                elif k == "cameras" and isinstance(v, (list, tuple)):
+                    v = tuple(
+                        within(f"robot.{k}[{i}]", CameraMount.from_dict, c) if isinstance(c, Mapping) else c
+                        for i, c in enumerate(v)
+                    )
+                    given[k] = v
+                    continue
                 given[k] = _tuplify(v) if isinstance(v, (list, tuple)) else v
             spec = Chain(**given)
             return self._copy(robot=Chain(**DEFAULTS["robot"]).merge(spec) if merge_chain else spec)

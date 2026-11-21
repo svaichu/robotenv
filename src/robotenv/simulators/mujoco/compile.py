@@ -8,7 +8,7 @@ import mujoco
 import numpy as np
 
 from ...config import EnvConfig, FixedGains, InertiaScaledGains, Pose
-from .arm_spec import add_arm, add_gripper
+from .arm_spec import add_arm, add_cameras, add_gripper, arm_camera_target
 from .mount import resolve_world_mount
 from .scenes import apply_scene
 
@@ -114,6 +114,8 @@ def _build_spec(cfg: EnvConfig, kp: list[float], kd: list[float], scene_hook=Non
     parent, prev_tip = add_arm(base, arm, conaffinity=conaffinity)
     if arm.gripper is not None:
         add_gripper(parent, arm, prev_tip, conaffinity=conaffinity)
+
+    add_cameras(base, arm.cameras, resolve=arm_camera_target(base, parent, prev_tip, arm, spec))
 
     # Pose(tip_offset, identity) composed with end_effector.
     parent.add_site(

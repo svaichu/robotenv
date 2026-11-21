@@ -25,6 +25,7 @@ from .specs import NOT_SET, Chain
 from .sim import INTEGRATORS, MujocoOptions, SimConfig, WarpOptions, register_simulator_options
 from .task import FixedBox, OwnReachable, TaskConfig
 from ..robot import (
+    CameraMount,
     Capsule,
     EndEffectorRef,
     ExternalJoint,
@@ -76,6 +77,7 @@ __all__ = [
     "ExternalJoint",
     "ExternalRobot",
     "robot_from_dict",
+    "CameraMount",
     "Capsule",
     "ConfigError",
     "JointSpec",
