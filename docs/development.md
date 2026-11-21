@@ -11,7 +11,9 @@ src/robotenv/
         mujoco/   CPU simulator: model compiler, batched sim, MujocoEnv, renderer, scene presets
         warp/     GPU simulator: WarpBatchedSim, WarpEnv
     tasks/        the task contract (base.py) and one subpackage per provider: empty/, robosuite/
-    robot/providers/   one subpackage per robot provider: menagerie/ (MuJoCo Menagerie robots, cards.json)
+    robot/providers/   one subpackage per robot provider: menagerie/ (MuJoCo Menagerie robots, cards.json),
+                       maniskill/ (ManiSkill's robots: agent class and URDF to MjSpec, cards.json),
+                       grx/ (the GRx humanoids of Wiki-GRx-Models: git fetch, URDF/MJCF to MjSpec, cards.json)
     envs/         make_env(cfg), observation_space / action_space
     viz/          Clip, FrameRecorder, record_rollout, camera framing                           numpy only
     _canon.py     canonical JSON, hashing, field coercion;  errors.py: ConfigError, Problem
@@ -49,6 +51,8 @@ MUJOCO_GL=egl pytest -m render                            # needs an OpenGL cont
 | `robosuite` | the `robosuite` extra |
 | `render` | an OpenGL context; skipped when there is none |
 | `menagerie` | the `menagerie` extra and a model download (CI caches the library's cache directory) |
+| `maniskill` | the `maniskill` extra (Python 3.10 to 3.12; no download: the robots tested ship in the wheel) |
+| `grx` | `git` and the network, or `GRX_ROOT` (CI caches the fetched commit) |
 
 CI (`.github/workflows/ci.yml`) runs the unmarked tests on Python 3.10, 3.12 and 3.13, and the robosuite tests (without GPU and render) in a separate job, because robosuite 1.5.x needs the compat layer on current MuJoCo
 and those tests notice when either side changes. Only the tip of a branch is expected to pass.
@@ -58,7 +62,7 @@ Beyond unit tests there are three kinds of check worth knowing:
 - **Parity** (`tests/parity.py`, `tests/test_warp_parity.py`): the GPU simulator against the CPU one, and both against the numpy kinematics oracle. A capability is claimed only after it matches.
 - **Notebook smoke tests** (`tests/test_notebooks.py`, `tests/nbrun.py`): the code cells of every notebook run in-process.
 - **`tests/test_no_hardcoded_tasks.py`**: the core must not name a task (the `empty` namespace is exempt). **`tests/test_no_hardcoded_robots.py`**: the core must not name a robot provider or a robot.
-- **Coverage of the library** (`tests/menagerie_expected.json`, `tests/test_menagerie_provider.py`): the status of every Menagerie robot; a test fails when one flips, and the table of `docs/robots/menagerie.md` is checked against the file.
+- **Coverage of the library** (`tests/menagerie_expected.json`, `tests/test_menagerie_provider.py`): the status of every Menagerie robot; a test fails when one flips, and the table of `docs/robots/menagerie.md` is checked against the file. The same for ManiSkill's agents: `tests/maniskill_expected.json`, `tests/test_maniskill_sweep.py`, `docs/robots/maniskill.md`.
 
 ## Documentation is tested
 

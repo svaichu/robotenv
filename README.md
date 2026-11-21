@@ -27,6 +27,8 @@ pip install -e ".[env]"                 # + torch, TorchRL, MuJoCo: the CPU simu
 pip install -e ".[env,robosuite]"       # + robosuite scenes as tasks
 pip install -e ".[env,warp]"            # + MuJoCo Warp: the GPU simulator (an NVIDIA GPU)
 pip install -e ".[menagerie]"           # + robots from MuJoCo Menagerie (Python >= 3.10.12)
+pip install -e ".[maniskill]"           # + robots from ManiSkill (Python 3.10 to 3.12); robots only, no ManiSkill tasks
+pip install -e ".[grx]"                 # + the GRx humanoids (models fetched with git, or GRX_ROOT)
 pip install -e ".[env,viz]"             # + GIF / MP4 output
 pip install -e ".[env,robosuite,viz,dev]"   # a development install; "yaml" adds YAML config files
 ```
@@ -53,7 +55,16 @@ panda = PROVIDER.describe("franka_emika_panda")
 env = BaseEnvConfig().robot(panda).sim(num_envs=4, scene="plain_floor").build()
 ```
 
-[Robots from Menagerie](docs/robots/menagerie.md) · [writing a robot provider](docs/robots/writing-a-robot-provider.md).
+ManiSkill's robots come the same way. ManiSkill is a robot provider only, for now: its tasks are not provided and its simulator, SAPIEN, simulates nothing here.
+
+```python
+from robotenv.robot.providers.maniskill import PROVIDER     # pip install -e ".[maniskill]"
+
+panda = PROVIDER.describe("panda")                           # ManiSkill's own PD gains as the native servos
+env = BaseEnvConfig().robot(panda).sim(num_envs=4, scene="plain_floor", integrator="implicitfast").build()
+```
+
+[Robots from Menagerie](docs/robots/menagerie.md) · [robots from ManiSkill](docs/robots/maniskill.md) · [GRx humanoids](docs/robots/grx.md) · [writing a robot provider](docs/robots/writing-a-robot-provider.md).
 
 ## Compare embodiments
 

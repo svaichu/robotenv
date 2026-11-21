@@ -149,7 +149,8 @@ The robot provider's `MjSpec` is attached to the scene and driven by **its own a
   `ctrlrange`. `iface.kp` and `kd` are read from the model for position servos (`gainprm[0]` and `-biasprm[2]`) and are `None` otherwise. (Measured on MuJoCo Menagerie: the Panda's first
   servo has gain 4500 and bias `(0, -4500, -450)`, the UR5e's shoulder servo gain 2000 and bias `(0, -2000, -400)`; for both, `ctrlrange` equals the joint range.)
 - **`dt` and the integrator** stay the authority of `SimConfig`: the scene carries them and the model's own are not used. A `sim.dt` more than twice the model's own `timestep` is reported
-  with a warning. The contact and solver options of the model (`cone`, `impratio`, solver, noslip) are the scene's: when the two differ, `MjSpec.attach` keeps the scene's value.
+  with a warning, and so is a model whose own option asks for an implicit integrator (`implicit`, `implicitfast`) when it is driven by its own actuators under an explicit `sim.integrator`: stiff
+  servos with velocity feedback chatter there, and the warning names the integrator to set. The contact and solver options of the model (`cone`, `impratio`, solver, noslip) are the scene's: when the two differ, `MjSpec.attach` keeps the scene's value.
 - **Spawn pose.** The world mount is where the model's world frame goes (above), so it is the spawn pose: a fixed arm (`Mount`) stands there, and a floating robot (`MobileMount`) starts there composed with
   `home_root`. Tested on the UR5e at a yawed and shifted mount; on Go1 and Go2 at the default mount, at a mount rotated 90° about z and shifted in x and y (in the base frame the robot starts at its
   model's home root), and at a mount 0.3 m up (they start above the floor, fall and land, and never go through it); and on TidyBot, whose base is made of joints (two slides and a hinge) under position

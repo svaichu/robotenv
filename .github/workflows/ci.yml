@@ -20,7 +20,7 @@ jobs:
         uses: astral-sh/setup-uv@v4
 
       - name: Run tests
-        run: uv run --python ${{ matrix.python-version }} --extra env --extra viz --extra dev pytest -v -m "not gpu and not robosuite and not render and not menagerie"
+        run: uv run --python ${{ matrix.python-version }} --extra env --extra viz --extra dev pytest -v -m "not gpu and not robosuite and not render and not menagerie and not maniskill and not grx"
 
   robosuite:
     # robosuite 1.5.x needs the compat layer on current MuJoCo; these tests notice when either side changes.
@@ -53,3 +53,36 @@ jobs:
 
       - name: Run menagerie tests
         run: uv run --python 3.12 --extra menagerie --extra dev pytest -v -m menagerie
+
+  maniskill:
+    # Robots from ManiSkill: the models of the robots tested ship in the wheel, so nothing is downloaded and nothing cached.
+    # ManiSkill cannot be installed on Python 3.13 (see the extra in pyproject.toml).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Run maniskill tests
+        # robosuite is installed too: one test runs a robosuite task on a ManiSkill robot.
+        run: uv run --python 3.12 --extra maniskill --extra robosuite --extra dev pytest -v -m "maniskill and not gpu and not render"
+
+  grx:
+    # Robots from Wiki-GRx-Models: the pinned commit is fetched with git on first use and cached between runs.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Cache GRx models
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/robotenv/grx
+          # Keep in step with PIN in src/robotenv/robot/providers/grx/_source.py.
+          key: grx-7d96c758f048
+
+      - name: Run grx tests
+        run: uv run --python 3.12 --extra grx --extra dev pytest -v -m "grx and not gpu and not render"

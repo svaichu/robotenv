@@ -1,7 +1,7 @@
 # Writing a robot provider
 
 A robot provider turns a source of robot models into [`ExternalRobot`](../configs/robot.md#externalrobot-a-model-that-lives-elsewhere)s and opens them for the simulator. It is the counterpart of a
-[task provider](../tasks/writing-a-provider.md) and is found the same way. The shipped example is [`menagerie`](menagerie.md); `tests/toy_robot_provider/` is a complete small one with its models written inline (no
+[task provider](../tasks/writing-a-provider.md) and is found the same way. The shipped examples are [`menagerie`](menagerie.md), whose models are MJCF files with their own actuators, and [`maniskill`](maniskill.md), which builds the `MjSpec` from a URDF and adds the actuators; `tests/toy_robot_provider/` is a complete small one with its models written inline (no
 download), and the engine tests run on it.
 
 A provider has a **config side**, numpy only, importable anywhere, and an **engine side** that needs MuJoCo.

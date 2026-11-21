@@ -302,6 +302,18 @@ def test_a_large_dt_is_reported_and_the_scene_keeps_dt_and_integrator(arm3):
     assert env._compiled.model.opt.timestep == 0.002 and env._compiled.model.opt.integrator == mujoco.mjtIntegrator.mjINT_EULER
 
 
+def test_a_model_that_asks_for_an_implicit_integrator_says_so_under_an_explicit_one():
+    arm3i = PROVIDER.describe("arm3i")
+    with pytest.warns(UserWarning, match="asks for the integrator 'implicitfast' and sim.integrator = 'euler'"):
+        env = make_env(reach_cfg(arm3i))
+    assert env._compiled.model.opt.integrator == mujoco.mjtIntegrator.mjINT_EULER  # the scene's still wins
+    cfg = reach_cfg(arm3i)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        make_env(replace(cfg, sim=replace(cfg.sim, integrator="implicitfast")))  # the integrator it asks for
+        make_env(replace(cfg, control=replace(cfg.control, gains=FixedGains(50.0, 5.0))))  # our servos: not its own
+
+
 def test_capabilities_list_the_external_kind():
     from robotenv.simulators import get_simulator
 
