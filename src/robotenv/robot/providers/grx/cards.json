@@ -1,0 +1,7 @@
+{
+  "_comment": "The GRx models of Wiki-GRx-Models this provider knows, per robot: 'dir' (the model directory under GRX/ of the repository) and 'entries' (a short name for each model file, relative to 'dir'). The first entry is the default. Models with the Fourier six-degree-of-freedom hand are not listed: their finger joints have no effort limits and are coupled by mimic joints that MuJoCo does not read.",
+  "gr1t1": {"dir": "GR1/gr1t1", "entries": {"basic": "basic_urdf/gr1t1.urdf", "dummy_hand": "basic_urdf/gr1t1_dummy_hand.urdf"}},
+  "gr1t2": {"dir": "GR1/gr1t2", "entries": {"basic": "basic_urdf/gr1t2.urdf", "dummy_hand": "basic_urdf/gr1t2_dummy_hand.urdf"}},
+  "gr2v3_8_7": {"dir": "GR2/gr2v3_8_7", "entries": {"basic": "mjcf/gr2v3_8_7.xml", "dummy_hand": "mjcf/gr2v3_8_7_dummy_hand.xml"}},
+  "gr3v2_1_1": {"dir": "GR3/gr3v2_1_1", "entries": {"basic": "mjcf/gr3v2_1_1.xml", "dummy_hand": "mjcf/gr3v2_1_1_dummy_hand.xml"}}
+}

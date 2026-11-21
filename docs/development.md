@@ -12,7 +12,8 @@ src/robotenv/
         warp/     GPU simulator: WarpBatchedSim, WarpEnv
     tasks/        the task contract (base.py) and one subpackage per provider: empty/, robosuite/
     robot/providers/   one subpackage per robot provider: menagerie/ (MuJoCo Menagerie robots, cards.json),
-                       maniskill/ (ManiSkill's robots: agent class and URDF to MjSpec, cards.json)
+                       maniskill/ (ManiSkill's robots: agent class and URDF to MjSpec, cards.json),
+                       grx/ (the GRx humanoids of Wiki-GRx-Models: git fetch, URDF/MJCF to MjSpec, cards.json)
     envs/         make_env(cfg), observation_space / action_space
     viz/          Clip, FrameRecorder, record_rollout, camera framing                           numpy only
     _canon.py     canonical JSON, hashing, field coercion;  errors.py: ConfigError, Problem
@@ -51,6 +52,7 @@ MUJOCO_GL=egl pytest -m render                            # needs an OpenGL cont
 | `render` | an OpenGL context; skipped when there is none |
 | `menagerie` | the `menagerie` extra and a model download (CI caches the library's cache directory) |
 | `maniskill` | the `maniskill` extra (Python 3.10 to 3.12; no download: the robots tested ship in the wheel) |
+| `grx` | `git` and the network, or `GRX_ROOT` (CI caches the fetched commit) |
 
 CI (`.github/workflows/ci.yml`) runs the unmarked tests on Python 3.10, 3.12 and 3.13, and the robosuite tests (without GPU and render) in a separate job, because robosuite 1.5.x needs the compat layer on current MuJoCo
 and those tests notice when either side changes. Only the tip of a branch is expected to pass.

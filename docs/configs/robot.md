@@ -230,7 +230,7 @@ which reads the model and returns an `ExternalRobot`; `spec(robot)`, which retur
 `validate(robot, simulator)`; and `kinematics(robot)`, which returns an oracle with `forward_ee_batch(q, base)` and `sample_joint_positions(num, rng)`. The last
 three and `describe` are engine side: importing the provider imports no engine. Providers are found lazily, in this order of precedence:
 `register_robot_provider(namespace, target)`, the entry-point group `robotenv.robot.providers`, then the subpackages of `robotenv.robot.providers`.
-`list_robot_providers()` loads nothing; `get_robot_provider(namespace)` loads one. The core names no provider. The shipped providers are [`menagerie`](../robots/menagerie.md) and [`maniskill`](../robots/maniskill.md).
+`list_robot_providers()` loads nothing; `get_robot_provider(namespace)` loads one. The core names no provider. The shipped providers are [`menagerie`](../robots/menagerie.md), [`maniskill`](../robots/maniskill.md) and [`grx`](../robots/grx.md).
 
 `config.kinematics.forward_ee_batch` and `sample_joint_positions` accept an `ExternalRobot` and ask its provider for the oracle; without the engine they raise a
 `ConfigError` that says what to install. `forward` (link frames) is for the `ParametricArm` only.
