@@ -83,6 +83,7 @@ A ManiSkill model is a URDF (for a few agents an MJCF) written for SAPIEN and Ph
 | keyframes, in SAPIEN's joint order (breadth first) | the same keyframes, mapped onto MuJoCo's joints by name |
 | jointed links never collide; an SRDF disables more pairs | a contact exclude for every pair of jointed links and for every pair of the SRDF |
 | a friction coefficient on single links (the Panda's fingers) | the same coefficient on the geoms of those links; SAPIEN's contact patch radius has no counterpart and is dropped |
+| the torque motors of an MJCF model (the `humanoid`), ignored by ManiSkill's controller | replaced by the same PD servos as a URDF's; the motor's largest torque (gear times control range) becomes the joint's force limit |
 | a root link that is not fixed | a free joint on the root body |
 | visual meshes and collision meshes | **collision geometry only**: a render shows the collision meshes |
 | PhysX contact and solver settings | MuJoCo's, and the scene's options win ([simulators](../simulators.md#external-robots-on-the-cpu-simulator)) |
@@ -115,15 +116,15 @@ tests. This was measured on Warp's CPU device; **CUDA is not verified**. The oth
 
 `tests/maniskill_expected.json` records the status of every agent when described with no arguments and run with the `empty/idle` task (2 envs, 10 zero steps and 10 random steps,
 `implicitfast`). A fixed-base robot is run in the `empty` scene and a floating one on `plain_floor`: a hand mounted at the origin reaches below z = 0. The suite fails when a robot flips, and the
-table below is checked against that file. Today 19 run,
-19 are not downloaded and 5 are refused for another reason.
+table below is checked against that file. Today 20 run,
+19 are not downloaded and 4 are refused for another reason.
 
 - **ok** means the robot builds and steps with finite numbers and a stable simulation. It does not mean that it stands or that it moves as in ManiSkill.
-- **holds keyframe**: with a zero delta action for 200 control steps the driven joints stay within 0.05 rad (or m) of the keyframe; `-` where there is no keyframe. 16 do. `unitree_g1` does
-  not: it is a free-standing humanoid without a balance controller.
+- **holds keyframe**: with a zero delta action for 200 control steps the driven joints stay within 0.05 rad (or m) of the keyframe; `-` where there is no keyframe. 16 do. `unitree_g1` and `humanoid` do
+  not: they are free-standing humanoids without a balance controller.
 - **refused: not downloaded**: the model is not in the wheel. These 19 robots are **untested**: the file was written where ManiSkill's download is not reachable.
 - **refused: unstable**: MuJoCo reports a diverging simulation. The Inspire hands couple finger joints through mimic constraints on links with an inertia of 2e-9 kg m².
-- **refused: needs effort_limit**: the model (the MJCF `humanoid`) has no force limit; `describe(..., effort_limit=...)` supplies one.
+- **refused: needs effort_limit**: the model has no force limit; `describe(..., effort_limit=...)` supplies one. No robot is in this state today.
 
 | robot | status | holds keyframe |
 |---|---|---|
@@ -141,7 +142,7 @@ table below is checked against that file. Today 19 run,
 | `floating_panda_gripper` | ok | yes |
 | `floating_robotiq_2f_85_gripper` | refused: not downloaded | - |
 | `googlerobot` | refused: not downloaded | - |
-| `humanoid` | refused: needs effort_limit | - |
+| `humanoid` | ok | no |
 | `koch-v1.1` | ok | yes |
 | `panda` | ok | yes |
 | `panda_stick` | ok | yes |
