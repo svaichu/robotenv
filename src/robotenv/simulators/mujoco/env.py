@@ -17,6 +17,7 @@ from torchrl.envs import EnvBase
 from ...config import EnvConfig
 from ...tasks.base import mount_site_of as _mount_site
 from ...envs.spaces import SpacesMixin
+from ...mdp.manager import MdpManager
 from ..base import task_seed
 from .compile import compile_robot
 from .sim import BatchedSim
@@ -72,7 +73,6 @@ class MujocoEnv(SpacesMixin, EnvBase):
         params = cfg.task.params
         self._max_episode_steps = cfg.task.max_episode_steps
         self._reset_noise = float(getattr(params, "reset_noise", 0.0))
-        self._terminate_on_success = bool(getattr(params, "terminate_on_success", False))
 
         # Two seeded streams. ``_gen`` draws the reset noise of the robot (its shape depends on the number of joints).
         # ``_task_gen`` is for the task alone: what the task draws (an object placement, a goal) is then the same for
@@ -84,19 +84,10 @@ class MujocoEnv(SpacesMixin, EnvBase):
         self._episode_step = torch.zeros(N, 1, dtype=torch.int64)
 
         f32 = torch.float32
-        self.observation_spec = Composite(
-            task=task.observation_spec(N),
-            proprio=Composite(
-                qpos=Unbounded(shape=(N, n), dtype=f32),
-                qvel=Unbounded(shape=(N, n), dtype=f32),
-                effort=Unbounded(shape=(N, n), dtype=f32),
-                **({"gripper": Unbounded(shape=(N, 1), dtype=f32)} if self._has_gripper else {}),
-                shape=(N,),
-            ),
-            success=Binary(shape=(N, 1), dtype=torch.bool),
-            episode_step=Unbounded(shape=(N, 1), dtype=torch.int64),
-            shape=(N,),
-        )
+        # The MDP of the task (``cfg.task.mdp``): which observations exist, the reward and the termination rules.
+        self._mdp = MdpManager(cfg, task, self._sim, action_dim=m, has_gripper=self._has_gripper)
+        self._last_action = torch.zeros(N, m, dtype=f32)  # the action applied in the last step, zeros after a reset
+        self.observation_spec = self._mdp.observation_spec()
         self.action_spec = Bounded(low=-1.0, high=1.0, shape=(N, m), dtype=f32)
         self.reward_spec = Unbounded(shape=(N, 1), dtype=f32)
         self.done_spec = Composite(
@@ -120,6 +111,16 @@ class MujocoEnv(SpacesMixin, EnvBase):
         """The engine side of the task (``tasks.base.TaskImpl``)."""
         return self._task
 
+    @property
+    def mdp(self) -> MdpManager:
+        """The resolved MDP (``cfg.task.mdp``): the observation keys, reward and termination terms."""
+        return self._mdp
+
+    @property
+    def reward_terms(self) -> dict[str, torch.Tensor]:
+        """The last step's weighted reward terms, ``{name: (N, 1)}``; empty when the reward is the task's own."""
+        return dict(self._mdp.last_reward_terms)
+
     # --- sampling -------------------------------------------------------------------
 
     def _rand(self, *shape, dtype=torch.float64) -> torch.Tensor:
@@ -130,31 +131,16 @@ class MujocoEnv(SpacesMixin, EnvBase):
 
     # --- observations ---------------------------------------------------------------
 
-    def _observe(self) -> tuple[TensorDict, dict]:
+    def _observe(self, action: torch.Tensor | None = None, prev_action: torch.Tensor | None = None):
+        """The observation TensorDict and the context the terms were evaluated on (it also serves reward and done)."""
         s = self._sim
-        task_obs = self._task.observe(s)
-        out = TensorDict(
-            {
-                "task": TensorDict(dict(task_obs), batch_size=self.batch_size),
-                "proprio": TensorDict(
-                    {
-                        "qpos": torch.from_numpy(s.qpos).to(torch.float32),
-                        "qvel": torch.from_numpy(s.qvel).to(torch.float32),
-                        "effort": torch.from_numpy(s.actuator_force).to(torch.float32),
-                        **(
-                            {"gripper": torch.from_numpy(s.gripper_opening).to(torch.float32)}
-                            if self._has_gripper
-                            else {}
-                        ),
-                    },
-                    batch_size=self.batch_size,
-                ),
-                "success": self._task.success(s, task_obs),
-                "episode_step": self._episode_step.clone(),
-            },
-            batch_size=self.batch_size,
+        ctx = self._mdp.context(
+            self._task.observe(s),
+            self._last_action if action is None else action,
+            self._last_action if prev_action is None else prev_action,
+            self._episode_step,
         )
-        return out, task_obs
+        return self._mdp.observations(ctx), ctx
 
     # --- EnvBase interface ----------------------------------------------------------
 
@@ -183,6 +169,7 @@ class MujocoEnv(SpacesMixin, EnvBase):
             self._q_target[mask.numpy()] = self._sim.qpos[mask.numpy()]
         self._task.reset(self._sim, mask, self._task_rand, injected)
         self._episode_step[mask] = 0
+        self._last_action[mask] = 0.0
 
         out, _ = self._observe()
         for key in ("done", "terminated", "truncated"):
@@ -213,11 +200,10 @@ class MujocoEnv(SpacesMixin, EnvBase):
         self._sim.step()
         self._episode_step += 1
 
-        out, task_obs = self._observe()
-        success = out["success"]
-        truncated = self._episode_step >= self._max_episode_steps
-        terminated = success.clone() if self._terminate_on_success else torch.zeros_like(success)
-        out.set("reward", self._task.reward(self._sim, task_obs))
+        prev_action, self._last_action = self._last_action, torch.from_numpy(action).to(torch.float32)
+        out, ctx = self._observe(self._last_action, prev_action)
+        terminated, truncated = self._mdp.done(ctx)
+        out.set("reward", self._mdp.reward(ctx))
         out.set("terminated", terminated)
         out.set("truncated", truncated)
         out.set("done", terminated | truncated)

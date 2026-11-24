@@ -56,7 +56,8 @@ Every environment is a TorchRL `EnvBase` with `batch_size = [num_envs]` and `bat
 
 **Action.** `action_spec` is `Bounded(-1, 1)` of shape `[N, n]` (`[N, n + 1]` with a gripper, the last component being the opening). How it becomes a command: [control](configs/control.md#modes).
 
-**Observation** (nested; nothing is flattened):
+**Observation** (nested; nothing is flattened). The table is what an environment has **by default**; `cfg.task.mdp.observations` ([MDP](configs/mdp.md)) selects the entries, and
+adds `proprio/ee_pos`, `proprio/qpos_norm`, `proprio/last_action` and `time_remaining`:
 
 | key | shape, dtype | content |
 |---|---|---|
@@ -73,6 +74,8 @@ objects; dtypes and bounds stay in `observation_spec` / `action_spec`, and the b
 
 **Step output** (under `("next", ...)` in a TorchRL step): the observation, `reward` `[N, 1]` f32, and `done`, `terminated`, `truncated` `[N, 1]` bool.
 `truncated` is set once `episode_step >= max_episode_steps`; `terminated` is `success` if the task's params have `terminate_on_success = True`, else `False`; `done = terminated | truncated`.
+With `cfg.task.mdp` set ([MDP](configs/mdp.md)) the `reward` is the sum of the configured terms (`env.reward_terms` has each one) and `terminated` / `truncated` come from its termination terms (`max_episode_steps` still
+truncates). Both simulators evaluate the same terms on the same context; the GPU simulator has no gripper, so `proprio/gripper` is not offered there.
 
 **Reset.** The environment **never autoresets**. Reset only some rows with the `_reset` mask; unselected rows are untouched.
 

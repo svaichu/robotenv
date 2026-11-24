@@ -193,6 +193,9 @@ class ReachTask(BaseTask):
 - **Robots without an end effector.** An `ExternalRobot` may have `end_effector=None` (a quadruped), and then `iface.ee_site_id` is `None`. A task that reads the end effector says so in
   `validate`: `Problem("robot.end_effector", ...)` when `getattr(cfg.robot, "end_effector", True) is None`.
 - **Frames.** Observe positions in the robot's base frame (`"base"`), as the other providers do, so a task reads the same for every mount.
+- **The MDP.** What `observe` returns is the set of `task/<name>` keys users can select and that rewards and terminations can read (`reward("distance", -1.0, a="proprio/ee_pos", b="task/target_pos")`), so name
+  and document them. `reward` and `success` are the provider's *own* reward and success: the environment uses them when `cfg.task.mdp` does not say otherwise, and the terms `task_reward` and `task_success`
+  call them. A provider may register terms of its own with `register_term` ([MDP](../configs/mdp.md#writing-a-term)).
 
 ## 5. Test it
 

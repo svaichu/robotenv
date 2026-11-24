@@ -16,6 +16,7 @@ from torchrl.envs import EnvBase
 from ...config import ConfigError, EnvConfig
 from ...tasks.base import mount_site_of as _mount_site
 from ...envs.spaces import SpacesMixin
+from ...mdp.manager import MdpManager
 from ..base import task_seed
 from ..mujoco.compile import compile_robot
 from .sim import WarpBatchedSim, check_model_supported
@@ -76,7 +77,6 @@ class WarpEnv(SpacesMixin, EnvBase):
         params = cfg.task.params
         self._max_episode_steps = cfg.task.max_episode_steps
         self._reset_noise = float(getattr(params, "reset_noise", 0.0))
-        self._terminate_on_success = bool(getattr(params, "terminate_on_success", False))
 
         # Two seeded CPU streams, as in MujocoEnv: the robot's reset noise, and the task's own draws.
         self._gen = torch.Generator(device="cpu")
@@ -86,20 +86,11 @@ class WarpEnv(SpacesMixin, EnvBase):
         self._episode_step = torch.zeros(N, 1, dtype=torch.int64, device=device)
 
         f32 = torch.float32
-        self.observation_spec = Composite(
-            task=task.observation_spec(N).to(device),
-            proprio=Composite(
-                qpos=Unbounded(shape=(N, n), dtype=f32, device=device),
-                qvel=Unbounded(shape=(N, n), dtype=f32, device=device),
-                effort=Unbounded(shape=(N, n), dtype=f32, device=device),
-                shape=(N,),
-                device=device,
-            ),
-            success=Binary(shape=(N, 1), dtype=torch.bool, device=device),
-            episode_step=Unbounded(shape=(N, 1), dtype=torch.int64, device=device),
-            shape=(N,),
-            device=device,
-        )
+        # The MDP of the task (``cfg.task.mdp``), as in MujocoEnv. This simulator has no gripper: its action is the n joint
+        # commands and ``proprio/gripper`` is not available.
+        self._mdp = MdpManager(cfg, task, self._sim, action_dim=n, has_gripper=False)
+        self._last_action = torch.zeros(N, n, dtype=f32, device=device)
+        self.observation_spec = self._mdp.observation_spec()
         self.action_spec = Bounded(low=-1.0, high=1.0, shape=(N, n), dtype=f32, device=device)
         self.reward_spec = Unbounded(shape=(N, 1), dtype=f32, device=device)
         self.done_spec = Composite(
@@ -124,6 +115,16 @@ class WarpEnv(SpacesMixin, EnvBase):
         """The engine side of the task (``tasks.base.TaskImpl``)."""
         return self._task
 
+    @property
+    def mdp(self) -> MdpManager:
+        """The resolved MDP (``cfg.task.mdp``): the observation keys, reward and termination terms."""
+        return self._mdp
+
+    @property
+    def reward_terms(self) -> dict[str, torch.Tensor]:
+        """The last step's weighted reward terms, ``{name: (N, 1)}``; empty when the reward is the task's own."""
+        return dict(self._mdp.last_reward_terms)
+
     # --- sampling -------------------------------------------------------------------
 
     def _rand(self, *shape, dtype=torch.float64) -> torch.Tensor:
@@ -134,24 +135,15 @@ class WarpEnv(SpacesMixin, EnvBase):
 
     # --- observations ---------------------------------------------------------------
 
-    def _observe(self) -> tuple[TensorDict, dict]:
-        s = self._sim
-        task_obs = self._task.observe(s)
-        out = TensorDict(
-            {
-                "task": TensorDict(dict(task_obs), batch_size=self.batch_size, device=self.device),
-                "proprio": TensorDict(
-                    {"qpos": s.qpos, "qvel": s.qvel, "effort": s.actuator_force},
-                    batch_size=self.batch_size,
-                    device=self.device,
-                ),
-                "success": self._task.success(s, task_obs),
-                "episode_step": self._episode_step.clone(),
-            },
-            batch_size=self.batch_size,
-            device=self.device,
+    def _observe(self, action: torch.Tensor | None = None, prev_action: torch.Tensor | None = None):
+        """The observation TensorDict and the context the terms were evaluated on (it also serves reward and done)."""
+        ctx = self._mdp.context(
+            self._task.observe(self._sim),
+            self._last_action if action is None else action,
+            self._last_action if prev_action is None else prev_action,
+            self._episode_step,
         )
-        return out, task_obs
+        return self._mdp.observations(ctx), ctx
 
     # --- EnvBase interface ----------------------------------------------------------
 
@@ -180,6 +172,7 @@ class WarpEnv(SpacesMixin, EnvBase):
             self._q_target[mask] = self._sim.qpos[mask]
         self._task.reset(self._sim, mask, self._task_rand, injected)
         self._episode_step[mask] = 0
+        self._last_action[mask] = 0.0
 
         out, _ = self._observe()
         for key in ("done", "terminated", "truncated"):
@@ -203,11 +196,10 @@ class WarpEnv(SpacesMixin, EnvBase):
         self._sim.check_overflow()
         self._episode_step += 1
 
-        out, task_obs = self._observe()
-        success = out["success"]
-        truncated = self._episode_step >= self._max_episode_steps
-        terminated = success.clone() if self._terminate_on_success else torch.zeros_like(success)
-        out.set("reward", self._task.reward(self._sim, task_obs))
+        prev_action, self._last_action = self._last_action, action.clone()
+        out, ctx = self._observe(self._last_action, prev_action)
+        terminated, truncated = self._mdp.done(ctx)
+        out.set("reward", self._mdp.reward(ctx))
         out.set("terminated", terminated)
         out.set("truncated", truncated)
         out.set("done", terminated | truncated)

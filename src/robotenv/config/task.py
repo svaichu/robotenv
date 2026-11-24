@@ -15,6 +15,7 @@ from typing import Any, Mapping
 from .._canon import as_float, as_int, as_vector, check_keys, within
 from .._pretty import kv
 from ..errors import ConfigError
+from .mdp import MdpConfig
 from .mount import MobileMount, Mount, check_mount, mount_from_dict
 from .providers import get_task_provider, known_task_ids, list_task_providers
 
@@ -84,6 +85,10 @@ class TaskConfig:
     ``Mount(offset=Pose)`` for a fixed-base arm, ``MobileMount(spawn, heading)`` for a floating-base robot; the world
     pose is ``world_mount(cfg)``. The robot itself has no pose, so ``robot_hash`` identifies the embodiment alone.
     Target regions are in the robot's base frame and follow the mount.
+
+    ``mdp`` says which rewards, terminations and observations the environment computes (``config.mdp.MdpConfig``);
+    ``None``, the one field that may be left out, is the provider's own. It is left out of ``to_dict`` when ``None``, so a
+    config that does not use it keeps its hash.
     """
 
     params: Any
@@ -91,6 +96,7 @@ class TaskConfig:
     success_tolerance: float | None
     target_region: TargetRegion | None
     mount: Mount | MobileMount
+    mdp: MdpConfig | None = None
 
     def __post_init__(self):
         provider = getattr(self.params, "provider", None)
@@ -105,6 +111,10 @@ class TaskConfig:
         if not isinstance(self.params, params_cls):
             raise ConfigError("params", f"task {self.id!r} requires {params_cls.__name__}")
         check_mount(self.mount)
+        if self.mdp is not None and not isinstance(self.mdp, MdpConfig):
+            raise ConfigError("mdp", f"expected an MdpConfig or None, got {type(self.mdp).__name__}")
+        if self.mdp is not None and self.mdp.is_default:
+            object.__setattr__(self, "mdp", None)  # nothing configured is the same config as no mdp: one hash
         max_episode_steps = as_int(self.max_episode_steps, "max_episode_steps")
         if max_episode_steps < 1:
             raise ConfigError("max_episode_steps", "must be >= 1")
@@ -137,12 +147,12 @@ class TaskConfig:
         rows = [
             ("params", self.params if extra else None), ("max_episode_steps", self.max_episode_steps),
             ("success_tolerance", self.success_tolerance), ("target_region", self.target_region),
-            ("mount", self.mount),
+            ("mount", self.mount), ("mdp", self.mdp),
         ]
         return "\n".join([f"TaskConfig  {self.id}", *kv(rows)])
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out = {
             "provider": self.params.provider,
             "params": self.params.to_dict(),
             "max_episode_steps": self.max_episode_steps,
@@ -150,11 +160,16 @@ class TaskConfig:
             "target_region": None if self.target_region is None else self.target_region.to_dict(),
             "mount": self.mount.to_dict(),
         }
+        if self.mdp is not None:
+            out["mdp"] = self.mdp.to_dict()
+        return out
 
     @classmethod
     def from_dict(cls, d: Mapping[str, Any]) -> "TaskConfig":
         d = migrate_task_dict(d)
-        check_keys(d, {"provider", "params", "max_episode_steps", "success_tolerance", "target_region", "mount"}, "")
+        check_keys(
+            d, {"provider", "params", "max_episode_steps", "success_tolerance", "target_region", "mount"}, "", {"mdp"}
+        )
         raw = d["params"]
         if not isinstance(raw, Mapping):
             raise ConfigError("params", f"expected a mapping, got {type(raw).__name__}")
@@ -168,6 +183,7 @@ class TaskConfig:
             success_tolerance=d["success_tolerance"],
             target_region=None if region is None else within("target_region", region_from_dict, region),
             mount=within("mount", mount_from_dict, d["mount"]),
+            mdp=None if d.get("mdp") is None else within("mdp", MdpConfig.from_dict, d["mdp"]),
         )
 
 

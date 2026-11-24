@@ -18,6 +18,7 @@ from robotenv.config import (
     FixedBox,
     FixedGains,
     InertiaScaledGains,
+    MdpConfig,
     Mount,
     MujocoOptions,
     Pose,
@@ -25,6 +26,8 @@ from robotenv.config import (
     TaskConfig,
     TwoFingerGripper,
     chain,
+    reward,
+    termination,
 )
 from tests.toy_provider import ReachParams
 
@@ -37,7 +40,7 @@ def _arm(n, axes, **kw):
     return chain(n, axes, total_length=0.3 * n, total_mass=1.0 * n, **_PHYSICS, **kw)
 
 
-def _env(arm, gains=None, mount=None):
+def _env(arm, gains=None, mount=None, mdp=None):
     return EnvConfig(
         robot=arm,
         control=ControlConfig(mode="joint_pos_abs", gains=gains or FixedGains(kp=60.0, kd=6.0), action_scale=None),
@@ -47,6 +50,7 @@ def _env(arm, gains=None, mount=None):
             success_tolerance=0.02,
             target_region=FixedBox(low=(0.2, -0.3, 0.0), high=(0.6, 0.3, 0.4)),
             mount=mount or Mount(),
+            mdp=mdp,
         ),
         sim=SimConfig(simulator="mujoco", num_envs=8, device="cpu", dt=0.002, integrator="euler", control_freq=50,
                       seed=0, scene="plain_floor", options=MujocoOptions(self_collision=False)),
@@ -63,6 +67,11 @@ def configs() -> dict[str, EnvConfig]:
         "inertia_scaled_gains": _env(_arm(3, "zyz"), gains=InertiaScaledGains(bandwidth=20.0, damping_ratio=1.0)),
         "mount": _env(_arm(3, "zyz"), mount=Mount(Pose(pos=(0.5, -0.2, 0.1), quat=(0.7071067811865476, 0.0, 0.0, 0.7071067811865476)))),
         "base_env_default": BaseEnvConfig().resolve(),
+        "mdp": _env(_arm(3, "zyz"), mdp=MdpConfig(
+            rewards=(reward("distance", -1.0, a="proprio/ee_pos", b="task/target_pos"), reward("action_rate_sq", -0.1)),
+            terminations=(termination("time_out", "timeout", steps=100),),
+            observations=("proprio/qpos", "proprio/ee_pos", "task/target_pos"),
+        )),
     }
 
 

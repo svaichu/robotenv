@@ -36,6 +36,7 @@ assert (env_cfg.robot.config_hash, env_cfg.env_hash) == (cfg.resolve().robot.con
 | [Robot](configs/robot.md) | `ParametricArm`, `chain()`, the gripper, `ExternalRobot` and robot providers, hashing, forward kinematics |
 | [Control](configs/control.md) | `ControlConfig`: modes, gains, action scaling |
 | [Task](configs/task.md) | `TaskConfig`: params, episode length, mount, goal regions, where tasks come from |
+| [MDP](configs/mdp.md) | `TaskConfig.mdp`: reward, termination and observation terms; reading the robot state; choosing keys interactively (`catalog`, `ObsSelector`, `preview`) |
 | [Simulation](configs/sim.md) | `SimConfig`, scenes, `MujocoOptions`, `WarpOptions` |
 | [Robot provider: menagerie](robots/menagerie.md) | MuJoCo Menagerie robots as `ExternalRobot`s: `describe`, cards, licences, which robots run |
 | [Robot provider: maniskill](robots/maniskill.md) | ManiSkill's robots as `ExternalRobot`s (a robot provider only, for now): what is taken from an agent, how it differs from the robot in ManiSkill, which robots run |
@@ -77,4 +78,5 @@ Runnable notebooks are in [`examples/`](../examples); [`mount.ipynb`](../example
 **embodiment**: a robot configuration. **simulator**: a physics engine (`mujoco`, `warp`). **task** / **task provider**: `"<namespace>/<name>"` and the owner of the namespace.
 **robot provider** / **external robot** / **native gains**: the owner of a robot namespace; a reference to one of its models (`ExternalRobot`); `NativeGains`, which drives such a model with its own actuators.
 **scene**: a simulator preset (`sim.scene`), or, for robosuite, an arena with objects. **mount frame**: the scene's own place for a robot (a world pose, from the task provider). **mount**: what the task adds to it: `Mount(offset)` for a fixed-base arm, `MobileMount(spawn, heading)` for a floating-base robot. **resolve**: turn the builder into the frozen `EnvConfig`.
+**mdp** / **term**: `TaskConfig.mdp`, the configured rewards, terminations and observation keys; a *term* is a named function of the robot, task and action state.
 **config side / engine side**: numpy-only code versus code that needs torch and MuJoCo. The full table is in [Design](design.md#vocabulary).

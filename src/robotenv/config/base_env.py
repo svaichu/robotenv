@@ -32,7 +32,7 @@ from .task import TaskConfig, migrate_task_dict
 __all__ = ["BaseEnvConfig"]
 
 _CONTROL_FIELDS = ("mode", "gains", "action_scale")
-_TASK_FIELDS = ("max_episode_steps", "success_tolerance", "target_region", "mount")
+_TASK_FIELDS = ("max_episode_steps", "success_tolerance", "target_region", "mount", "mdp")
 _SIM_FIELDS = tuple(f.name for f in fields(SimConfig))
 _GOAL_FIELDS = ("success_tolerance", "target_region")
 
@@ -114,7 +114,7 @@ class BaseEnvConfig:
         self._control = {"mode": d["control"]["mode"], "gains": FixedGains(d["control"]["kp"], d["control"]["kd"]),
                          "action_scale": d["control"]["action_scale"]}
         self._task = {"params": params_cls(name=name), "max_episode_steps": d["task"]["max_episode_steps"], "success_tolerance": None,
-                      "target_region": None, "mount": Mount()}
+                      "target_region": None, "mount": Mount(), "mdp": None}
         self._sim = {k: d["sim"][k] for k in _SIM_FIELDS if k != "options"}
         self._sim["options"] = _default_options(d["sim"]["simulator"])
         self._written: frozenset[str] = frozenset()
@@ -173,8 +173,10 @@ class BaseEnvConfig:
 
     def task(self, params: Any = NOT_SET, **fields_: Any) -> "BaseEnvConfig":
         """Refine the task: a provider's params object (it is the task), keywords ``max_episode_steps``, ``success_tolerance``,
-        ``target_region``, ``mount``, or a whole ``TaskConfig``. A new params class resets ``success_tolerance`` and
-        ``target_region`` (they belong to goal tasks) unless the call writes them. A written ``mount`` is pinned."""
+        ``target_region``, ``mount``, ``mdp`` (an ``MdpConfig``, or ``None`` for the provider's own reward, terminations
+        and observations), or a whole ``TaskConfig``. A new params class resets ``success_tolerance`` and
+        ``target_region`` (they belong to goal tasks) unless the call writes them; ``mdp`` is kept, and checked when the
+        environment is built. A written ``mount`` is pinned."""
         _check_keys("task", fields_, _TASK_FIELDS)
         values = dict(self._task)
         changed = dict(fields_)
@@ -292,7 +294,8 @@ class BaseEnvConfig:
                  else {"kind": "chain", **{n: _jsonable(getattr(self._robot, n)) for n in self._robot.written()}})
         t = self._task
         task = {"provider": t["params"].provider, "params": t["params"].to_dict(), "max_episode_steps": t["max_episode_steps"],
-                "success_tolerance": t["success_tolerance"], "target_region": _jsonable(t["target_region"])}
+                "success_tolerance": t["success_tolerance"], "target_region": _jsonable(t["target_region"]),
+                "mdp": _jsonable(t["mdp"])}
         task["mount"] = _jsonable(self._mount())
         sim = {k: self._sim[k] for k in _SIM_FIELDS if k != "options"}
         if self._sim["options"] is not NOT_SET:
@@ -370,11 +373,11 @@ class BaseEnvConfig:
             c = within("control", ControlConfig.from_dict, d)
             return self._copy(control={k: getattr(c, k) for k in _CONTROL_FIELDS})
         if section == "task":
-            check_keys(d, {"provider", "params", "max_episode_steps", "success_tolerance", "target_region"}, "task", {"mount"})
+            check_keys(d, {"provider", "params", "max_episode_steps", "success_tolerance", "target_region"}, "task", {"mount", "mdp"})
             probe = within("task", TaskConfig.from_dict, {**d, "mount": d.get("mount", Mount().to_dict())})
             task = {"params": probe.params, "max_episode_steps": probe.max_episode_steps, "success_tolerance": probe.success_tolerance,
                     "target_region": probe.target_region,
-                    "mount": probe.mount}
+                    "mount": probe.mount, "mdp": probe.mdp}
             return self._copy(task=task)
         d = dict(d)
         check_keys(d, set(), "sim", optional=set(_SIM_FIELDS))

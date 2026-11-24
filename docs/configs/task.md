@@ -13,7 +13,7 @@ from robotenv.tasks.empty import EmptyParams
 
 ## Fields
 
-`TaskConfig(params, max_episode_steps, success_tolerance, target_region, mount)`; every field is required.
+`TaskConfig(params, max_episode_steps, success_tolerance, target_region, mount, mdp=None)`; every field is required except `mdp`.
 
 | field | meaning |
 |---|---|
@@ -21,6 +21,7 @@ from robotenv.tasks.empty import EmptyParams
 | `max_episode_steps` | episode length; the environment sets `truncated` after this many steps (Gymnasium's name for a time limit). `>= 1` |
 | `success_tolerance`, `target_region` | the goal of a *goal task* (below); `None` for every other task |
 | `mount` | `Mount(offset)` for a fixed-base arm, `MobileMount(spawn, heading)` for a floating-base robot: the base relative to the scene's mount frame. Target regions are in the robot's base frame and follow it |
+| `mdp` | `None` (the provider's own reward, termination rule and observations) or an `MdpConfig`: [rewards, terminations and observation keys](mdp.md). Left out of `to_dict` when `None`, so a config that does not use it keeps its hash |
 
 `task.id` is derived, `"<provider>/<name>"`, and used in messages and logs; it is never stored (the dict holds `provider` and `params.name`).
 

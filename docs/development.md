@@ -6,7 +6,7 @@
 src/robotenv/
     robot/        ParametricArm, ExternalRobot, JointSpec, LinkSpec, TwoFingerGripper, Pose, chain()   numpy only
     config/       ControlConfig, SimConfig, TaskConfig, EnvConfig, BaseEnvConfig, Chain, sweep,    numpy only
-                  the task-provider and robot-provider registries (providers.py, robot_providers.py), kinematics oracle, defaults.py
+                  MdpConfig (mdp.py), the task-provider and robot-provider registries (providers.py, robot_providers.py), kinematics oracle, defaults.py
     simulators/   registry, Capabilities, Simulator protocol
         mujoco/   CPU simulator: model compiler, batched sim, MujocoEnv, renderer, scene presets
         warp/     GPU simulator: WarpBatchedSim, WarpEnv
@@ -14,6 +14,7 @@ src/robotenv/
     robot/providers/   one subpackage per robot provider: menagerie/ (MuJoCo Menagerie robots, cards.json),
                        maniskill/ (ManiSkill's robots: agent class and URDF to MjSpec, cards.json),
                        grx/ (the GRx humanoids of Wiki-GRx-Models: git fetch, URDF/MJCF to MjSpec, cards.json)
+    mdp/          the MDP terms: registry and built-in terms (numpy only to import), MdpContext and MdpManager (engine), catalog / ObsSelector / preview
     envs/         make_env(cfg), observation_space / action_space
     viz/          Clip, FrameRecorder, record_rollout, camera framing                           numpy only
     _canon.py     canonical JSON, hashing, field coercion;  errors.py: ConfigError, Problem

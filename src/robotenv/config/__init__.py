@@ -19,6 +19,7 @@ from .robot_providers import (
     register_robot_provider,
     unregister_robot_provider,
 )
+from .mdp import MdpConfig, RewardTerm, TerminationTerm, reward, termination
 from .mount import MobileMount, Mount, scene_frame, snapped, world_mount
 from .sweep import Family
 from .specs import NOT_SET, Chain
@@ -53,6 +54,7 @@ __all__ = [
     "FixedGains",
     "INTEGRATORS",
     "InertiaScaledGains",
+    "MdpConfig",
     "MobileMount",
     "Mount",
     "MujocoOptions",
@@ -68,10 +70,14 @@ __all__ = [
     "register_simulator_options",
     "register_task_provider",
     "unregister_task_provider",
+    "RewardTerm",
     "RobotProvider",
+    "TerminationTerm",
     "get_robot_provider",
     "list_robot_providers",
     "register_robot_provider",
+    "reward",
+    "termination",
     "unregister_robot_provider",
     "EndEffectorRef",
     "ExternalJoint",

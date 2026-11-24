@@ -40,6 +40,19 @@ class EnvConfig:
                 raise ConfigError(f"control.gains.{name}", f"expected {n} per-joint values, got {len(v)}")
         self._check_gains_against_robot()
         check_mount_fits_robot(self.task.mount, self.robot)
+        self._check_mdp()
+
+    def _check_mdp(self) -> None:
+        mdp = self.task.mdp
+        if mdp is None:
+            return
+        mdp.check_robot(self.robot, "task.mdp")
+        if mdp.terminations is not None and getattr(self.task.params, "terminate_on_success", False):
+            raise ConfigError(
+                "task.mdp.terminations",
+                "task.params.terminate_on_success is true and the terminations are configured too: list the success "
+                "rule as a termination (kind 'success') and set terminate_on_success to false",
+            )
 
     def _check_gains_against_robot(self) -> None:
         gains = self.control.gains

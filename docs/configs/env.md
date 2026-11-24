@@ -42,7 +42,7 @@ assert "None" not in text
 | hash | covers | use |
 |---|---|---|
 | `robot.config_hash` (12 hex) | the embodiment, label excluded | which arm; also `env.robot_hash` |
-| `cfg.env_hash` (12 hex) | the robot's full hash, control, task (including mount) and sim (including options) | which run; also `env.env_hash` |
+| `cfg.env_hash` (12 hex) | the robot's full hash, control, task (including mount and `mdp`) and sim (including options) | which run; also `env.env_hash` |
 
 `full_env_hash` and `robot.full_hash` are the untruncated SHA-256 digests. The input is canonical JSON with floats rounded to 12 significant digits.
 

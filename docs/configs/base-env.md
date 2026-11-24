@@ -31,7 +31,7 @@ assert base.resolve().robot.n == 1                       # every call returns a 
 |---|---|
 | robot | `Chain(n=1, axes="z", total_length=0.5, total_mass=1.0, radius=0.03, damping=0.5, armature=0.01, frictionloss=0.0, effort_limit=50.0, range=(-2.5, 2.5))` |
 | control | `joint_pos_abs`, `FixedGains(kp=60.0, kd=6.0)`, `action_scale=None` |
-| task | `empty/idle`, `max_episode_steps=200`, no goal fields; the mount is not written, so it follows the robot: `Mount()` for a fixed-base robot, `MobileMount()` for a floating-base one (both snapped onto the scene's frame) |
+| task | `empty/idle`, `max_episode_steps=200`, no goal fields, no `mdp` (the provider's own reward, terminations and observations); the mount is not written, so it follows the robot: `Mount()` for a fixed-base robot, `MobileMount()` for a floating-base one (both snapped onto the scene's frame) |
 | sim | `mujoco`, 1 env, `cpu`, `dt=0.002`, `euler`, `control_freq=50.0`, `seed=0`, scene `empty`, the simulator's default options |
 
 Changing a default changes the `env_hash` of every config that relied on it, so `DEFAULTS_VERSION` is raised with it. The version is written into every file
@@ -45,7 +45,7 @@ Each section call takes either a whole object of that section or keyword fields,
 |---|---|---|
 | `.robot(...)` | a `Chain`, a ready `ParametricArm` or `ExternalRobot`, or `Chain` fields as keywords | a `Chain` is merged field by field. Writing `total_length` clears `link_length` (and `total_mass` clears `mass`), and the other way round. A ready robot replaces the section (`Chain` fields cannot be combined with it); a later `.robot(n=...)` on it starts from the default chain again. With an `ExternalRobot`, `control.gains` that were not written resolve to `NativeGains`, and an unwritten `control.mode` is the default mode if it fits the robot's actuators, else the first mode that does; `explain()` shows these as `default (robot)` |
 | `.control(...)` | a `ControlConfig` or `mode`, `gains`, `action_scale` | switching to a scaled mode needs `action_scale=` in the same chain of calls, or `resolve()` reports it |
-| `.task(...)` | a provider's params object, a `TaskConfig`, or `max_episode_steps`, `success_tolerance`, `target_region`, `mount` | giving a params object of a **different class** resets `success_tolerance` and `target_region`, which belong to goal tasks, unless you write them |
+| `.task(...)` | a provider's params object, a `TaskConfig`, or `max_episode_steps`, `success_tolerance`, `target_region`, `mount`, `mdp` ([an `MdpConfig`](mdp.md) or `None`) | giving a params object of a **different class** resets `success_tolerance` and `target_region`, which belong to goal tasks, unless you write them |
 | `.sim(...)` | a `SimConfig` or any `SimConfig` field | changing `simulator` resets `options` to that simulator's `default()` unless `options=` is given |
 
 `Chain` is `chain()` with every argument optional (`NOT_SET` marks "not written"); `Chain.arm()` builds the arm and raises if a required value is missing.
@@ -119,7 +119,7 @@ except ConfigError as e:
 
 `with_overrides` applies dotted paths with the semantics of the section calls (they accumulate, and each touched section is rebuilt and validated by its own classes).
 It takes a mapping or a list of `"path=value"` strings, which is what a command line gives you; the value is parsed as a JSON literal and kept as a string if it is not one.
-Paths reach nested fields: `sim.options.self_collision`, `task.params.<field>`, `control.gains.kp`, `robot.total_length`. An unknown key raises `ConfigError` with the path.
+Paths reach nested fields: `sim.options.self_collision`, `task.params.<field>`, `control.gains.kp`, `robot.total_length`, `task.mdp.observations` (when an `mdp` is set; `task.mdp={...}` writes a whole one as a JSON literal, `task.mdp=null` removes it). An unknown key raises `ConfigError` with the path.
 
 ```python
 big = cfg.with_overrides(["sim.num_envs=64", "sim.options.self_collision=true", "robot.axes=zyy"])
