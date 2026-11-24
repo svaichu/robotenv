@@ -87,9 +87,48 @@ def auto_camera(
     """
     if not cfgs:
         raise ValueError("auto_camera needs at least one config")
+    pts = np.concatenate([workspace_points(c, n_samples) for c in cfgs], axis=0)
+    return fit_camera(pts, view=view, fovy=fovy, aspect=aspect, margin=margin)
+
+
+def grid_offsets(n: int, spacing: float, ncols: int | None = None) -> np.ndarray:
+    """``(n, 3)`` world offsets that lay ``n`` copies of a world out on a grid in the xy plane, ``spacing`` apart.
+    Env 0 stays at the origin; rows grow along +y and columns along +x."""
+    if n < 1:
+        raise ValueError("nothing to lay out")
+    cols = min(int(ncols) if ncols else math.ceil(math.sqrt(n)), n)
+    if cols < 1:
+        raise ValueError(f"ncols must be >= 1, got {ncols}")
+    k = np.arange(n)
+    return np.stack([(k % cols) * spacing, (k // cols) * spacing, np.zeros(n)], axis=1).astype(float)
+
+
+def default_spacing(cfg, n_samples: int = 512) -> float:
+    """Distance between neighbouring envs of a grid: the xy extent of the workspace plus 40 percent, at least 0.5 m."""
+    pts = workspace_points(cfg, n_samples)
+    return max(1.4 * float(np.ptp(pts[:, :2], axis=0).max()), 0.5)
+
+
+def grid_camera(
+    cfg,
+    offsets: np.ndarray,
+    *,
+    view: str = "iso",
+    fovy: float = 45.0,
+    aspect: float = 4.0 / 3.0,
+    margin: float = 1.1,
+    n_samples: int = 512,
+) -> CameraSpec:
+    """One camera that sees the workspace of ``cfg`` copied to every offset of a grid (see ``grid_offsets``)."""
+    pts = workspace_points(cfg, n_samples)
+    offsets = np.asarray(offsets, dtype=float).reshape(-1, 3)
+    allpts = (pts[None] + offsets[:, None]).reshape(-1, 3)
+    return fit_camera(allpts, view=view, fovy=fovy, aspect=aspect, margin=margin)
+
+
+def fit_camera(pts: np.ndarray, *, view: str, fovy: float, aspect: float, margin: float) -> CameraSpec:
     if view not in VIEWS:
         raise ValueError(f"unknown view {view!r}; available: {sorted(VIEWS)}")
-    pts = np.concatenate([workspace_points(c, n_samples) for c in cfgs], axis=0)
     center = (pts.min(axis=0) + pts.max(axis=0)) / 2.0
     radius = max(float(np.linalg.norm(pts - center, axis=1).max()), 0.1)
     # The tighter of the vertical and horizontal half angles decides how far back the camera must sit.

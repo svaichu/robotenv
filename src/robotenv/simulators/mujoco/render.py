@@ -13,7 +13,7 @@ from __future__ import annotations
 import mujoco
 import numpy as np
 
-from ...viz.camera import VIEWS, CameraSpec, auto_camera
+from ...viz.camera import VIEWS, CameraSpec, auto_camera, default_spacing, grid_camera, grid_offsets
 
 _GL_HINT = (
     "could not create an offscreen OpenGL context ({err}). On headless machines set MUJOCO_GL=egl "
@@ -57,21 +57,22 @@ class EnvRenderer:
         self._data = mujoco.MjData(self._model)  # scratch state, never stepped
         self._renderer: mujoco.Renderer | None = None
         self._size: tuple[int, int] | None = None
+        self._max_geom = 10000
         self._cameras: dict[tuple[str, int, int], mujoco.MjvCamera] = {}
 
     # --- setup --------------------------------------------------------------------------------------
 
-    def _ensure(self, height: int, width: int) -> mujoco.Renderer:
-        if self._renderer is not None and self._size == (height, width):
+    def _ensure(self, height: int, width: int, max_geom: int = 10000) -> mujoco.Renderer:
+        if self._renderer is not None and self._size == (height, width) and self._max_geom >= max_geom:
             return self._renderer
         self.close()
         g = self._model.vis.global_  # the offscreen buffer is 640x480 unless the model says otherwise
         g.offwidth, g.offheight = max(int(g.offwidth), width), max(int(g.offheight), height)
         try:
-            self._renderer = mujoco.Renderer(self._model, height, width)
+            self._renderer = mujoco.Renderer(self._model, height, width, max_geom=max_geom)
         except Exception as err:
             raise RuntimeError(_GL_HINT.format(err=f"{type(err).__name__}: {err}")) from err
-        self._size = (height, width)
+        self._size, self._max_geom = (height, width), max_geom
         return self._renderer
 
     def _camera(self, camera, height: int, width: int):
@@ -120,6 +121,61 @@ class EnvRenderer:
         renderer.update_scene(self._data, camera=self._camera(camera, height, width))
         if overlays:
             self._overlays(renderer.scene, env_index)
+        return renderer.render().copy()
+
+    def render_grid(
+        self,
+        env_indices=None,
+        *,
+        camera=None,
+        size=(480, 640),
+        overlays: bool = True,
+        spacing: float | None = None,
+        ncols: int | None = None,
+    ) -> np.ndarray:
+        """All of ``env_indices`` in ONE shared scene, laid out on a grid (env 0 at the origin).
+
+        The envs do not interact: each keeps its own state and is only drawn shifted by its grid offset.
+        """
+        n = self._env._sim.num_envs
+        idx = list(range(n)) if env_indices is None else [int(i) for i in env_indices]
+        if not idx:
+            raise ValueError("env_indices is empty")
+        for i in idx:
+            if not 0 <= i < n:
+                raise IndexError(f"env_index {i} out of range for {n} envs")
+        height, width = int(size[0]), int(size[1])
+        if height < 1 or width < 1:
+            raise ValueError(f"size must be positive (height, width), got {size}")
+        cfg = self._env.cfg
+        if spacing is None:
+            spacing = default_spacing(cfg)
+        offsets = grid_offsets(len(idx), float(spacing), ncols)
+        if camera is None:
+            camera = "iso"
+        if isinstance(camera, CameraSpec):
+            cam = camera.to_mjv()
+        elif isinstance(camera, str) and camera in VIEWS:
+            fovy = float(self._model.vis.global_.fovy)
+            cam = grid_camera(cfg, offsets, view=camera, fovy=fovy, aspect=width / height).to_mjv()
+        elif isinstance(camera, mujoco.MjvCamera):
+            cam = camera
+        else:
+            raise ValueError("a grid render needs a preset view name, a CameraSpec or an MjvCamera, not a model camera")
+        m = self._model
+        renderer = self._ensure(height, width, max_geom=max(10000, (2 * m.ngeom + 200) * len(idx)))
+        scene, opt, pert = renderer.scene, mujoco.MjvOption(), mujoco.MjvPerturb()
+        for k, (i, off) in enumerate(zip(idx, offsets)):
+            self._sync(self._env._sim.host_data(i))
+            start = 0 if k == 0 else scene.ngeom
+            if k == 0:
+                mujoco.mjv_updateScene(m, self._data, opt, pert, cam, mujoco.mjtCatBit.mjCAT_ALL, scene)
+            else:
+                mujoco.mjv_addGeoms(m, self._data, opt, pert, mujoco.mjtCatBit.mjCAT_ALL, scene)
+            if overlays:
+                self._overlays(scene, i)
+            for g in range(start, scene.ngeom):
+                scene.geoms[g].pos[:] += off
         return renderer.render().copy()
 
     def close(self) -> None:

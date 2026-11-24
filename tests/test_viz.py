@@ -219,10 +219,15 @@ class FakeEnv:
         self.batch_size = (n,)
         self.cfg = SimpleNamespace(sim=SimpleNamespace(control_freq=freq))
         self.calls = []
+        self.grid_calls = []
 
     def render(self, env_index=0, *, camera=None, size=(8, 10), overlays=True):
         self.calls.append((env_index, camera, size, overlays))
         return np.full((*size, 3), 10 + env_index, np.uint8)
+
+    def render_grid(self, env_indices=None, *, camera=None, size=(8, 10), overlays=True, spacing=None, ncols=None):
+        self.grid_calls.append((list(env_indices), spacing, ncols))
+        return np.full((*size, 3), 99, np.uint8)
 
 
 def test_recorder_every_and_finish_do_not_duplicate():
@@ -252,11 +257,42 @@ def test_recorder_finish_adds_last_state_when_every_does_not_divide():
 def test_recorder_tiles_selected_envs_and_labels():
     pytest.importorskip("PIL")
     env = FakeEnv(n=4)
-    rec = FrameRecorder(env, "all", size=(40, 60), ncols=2)
+    rec = FrameRecorder(env, "all", size=(40, 60), ncols=2, layout="tile")
     rec.capture(0)
     assert [c[0] for c in env.calls] == [0, 1, 2, 3]
     assert rec.frames[0].shape == (2 * 40 + 3 * 2, 2 * 60 + 3 * 2, 3)
     assert FrameRecorder(env, [3, 1]).indices == [3, 1] and FrameRecorder(env, 2).label is False
+
+
+def test_recorder_defaults_to_every_env_in_one_shared_scene():
+    pytest.importorskip("PIL")
+    env = FakeEnv(n=4)
+    rec = FrameRecorder(env, size=(40, 60), spacing=1.5, ncols=2)
+    assert rec.indices == [0, 1, 2, 3] and rec.layout == "scene"
+    rec.capture(0)
+    assert env.calls == [] and env.grid_calls == [([0, 1, 2, 3], 1.5, 2)]
+    assert rec.frames[0].shape == (40, 60, 3)  # one render, not a tiled mosaic
+    one = FakeEnv(n=1)
+    FrameRecorder(one, size=(8, 10)).capture(0)
+    assert one.grid_calls == [] and len(one.calls) == 1  # a single env is rendered as before
+    with pytest.raises(ValueError, match="layout"):
+        FrameRecorder(env, layout="mosaic")
+
+
+def test_grid_offsets_and_camera_cover_every_env():
+    from robotenv.viz import default_spacing, grid_camera, grid_offsets
+
+    offs = grid_offsets(5, 2.0)
+    assert offs.shape == (5, 3) and offs[0].tolist() == [0, 0, 0] and offs[4].tolist() == [2.0, 2.0, 0.0]
+    assert grid_offsets(4, 1.0, ncols=1)[3].tolist() == [0, 3.0, 0]
+    cfg = _cfg(3)
+    assert default_spacing(cfg) >= 0.5
+    one = grid_camera(cfg, grid_offsets(1, 1.0))
+    many = grid_camera(cfg, grid_offsets(16, default_spacing(cfg)))
+    assert many.distance > one.distance
+    assert many.lookat[0] > one.lookat[0] and many.lookat[1] > one.lookat[1]  # centred on the grid
+    with pytest.raises(ValueError):
+        grid_offsets(0, 1.0)
 
 
 def test_recorder_validates():
@@ -291,7 +327,7 @@ def test_record_rollout_follows_the_torchrl_callback_contract():
             return SimpleNamespace(shape=(self.batch_size[0], steps))
 
     env = Env()
-    traj, clip = record_rollout(env, 5, size=(8, 10), reset_td="inject", break_when_any_done=False)
+    traj, clip = record_rollout(env, 5, size=(8, 10), env_index=0, reset_td="inject", break_when_any_done=False)
     assert env.reset_arg == "inject" and traj.shape == (3, 5)
     assert len(clip) == 6 and clip.fps == 50.0  # steps + 1 frames
     with pytest.raises(TypeError, match="callback"):
